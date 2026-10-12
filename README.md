@@ -36,4 +36,4 @@ Built with Capacitor; the Android Studio project is in `android/`.
 Debug builds allow plain `http` (see `android/app/src/debug/AndroidManifest.xml`); release builds require https.
 For Play Store / sharing a signed APK, open `android/` in Android Studio → Build → Generate Signed App Bundle / APK.
 
-App icons are generated from `assets/` with `npx @capacitor/assets generate --android`.
+All icons (web + Android launcher) and the Android splash screen are made from `public/icon.svg`: edit the logo, then run `npm run icons`.

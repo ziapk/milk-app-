@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview --host",
     "apk": "vite build --mode android && CAP_HTTP=1 cap sync android && cd android && ./gradlew assembleDebug",
-    "apk:release": "vite build --mode android && cap sync android && cd android && ./gradlew assembleRelease"
+    "apk:release": "vite build --mode android && cap sync android && cd android && ./gradlew assembleRelease",
+    "icons": "node scripts/icons.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.9",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@capacitor/cli": "^7.6.9",
     "@vitejs/plugin-react": "^4.3.4",
+    "sharp": "^0.35.5",
     "typescript": "^5.9.3",
     "vite": "^6.0.0"
   }
