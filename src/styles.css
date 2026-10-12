@@ -253,3 +253,19 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
 .fontpick .on small { color: var(--blue); font-weight: 700; }
 
 .datebar > div { display: flex; flex-direction: column; gap: 4px; }
+/* Small action pills under a customer's details (Delivery + Customers) */
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pills .paypill { margin: 0; }
+.paypill.bill { background: #eaf2fd; color: var(--blue); }
+.paypill.give { background: var(--green); color: #fff; }
+.custcard .pills { justify-content: flex-end; margin-top: 8px; }
+
+/* Nastaliq glyphs sit low in the line box, so icons beside Urdu text look too high.
+   Nudge those icons down by a per-font amount. Icon-only buttons are not affected. */
+html[lang='ur'] { --ur-ico-shift: 0.22em; }
+html[lang='ur'][data-font='gulzar'] { --ur-ico-shift: 0.14em; }
+html[lang='ur'][data-font='naskh'] { --ur-ico-shift: 0; }
+html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form label > span, .search, .custcard .paypill) > :is(.fa-solid, .fa-brands) {
+  position: relative;
+  top: var(--ur-ico-shift);
+}

@@ -7,6 +7,7 @@ import Icon from '../Icon';
 import SearchBar from './SearchBar';
 import { filterCustomers } from '../search';
 import MonthlyReport from './MonthlyReport';
+import CustomerBill from './CustomerBill';
 
 export default function Customers({ onOpen }) {
   const { data, balance } = useStore();
@@ -15,10 +16,12 @@ export default function Customers({ onOpen }) {
   const [paying, setPaying] = useState(null);
   const [query, setQuery] = useState('');
   const [report, setReport] = useState(false);
+  const [billFor, setBillFor] = useState(null);
 
   const list = filterCustomers(data.customers, query).sort((a, b) => b.active - a.active || a.name.localeCompare(b.name));
 
   if (report) return <MonthlyReport onClose={() => setReport(false)} />;
+  if (billFor) return <CustomerBill id={billFor} onClose={() => setBillFor(null)} />;
 
   return (
     <>
@@ -45,8 +48,8 @@ export default function Customers({ onOpen }) {
             </div>
           );
         return (
-          <div key={c.id} className={`card row ${c.active ? '' : 'dim'}`}>
-            <button className="grow row link plain" onClick={() => onOpen(c.id)}>
+          <div key={c.id} className={`card custcard ${c.active ? '' : 'dim'}`}>
+            <button className="row link plain" onClick={() => onOpen(c.id)}>
               <div className="grow">
                 <div className="name">{c.name}</div>
                 <div className="muted">
@@ -56,9 +59,16 @@ export default function Customers({ onOpen }) {
               </div>
               <Balance amount={bal} />
             </button>
-            {bal > 0.5 && (
-              <button className="mark give on" aria-label={t.receive} onClick={() => setPaying(c.id)}><Icon name="hand-holding-dollar" /></button>
-            )}
+            <div className="pills">
+              <button className="paypill bill" onClick={() => setBillFor(c.id)}>
+                <Icon name="file-invoice" /> <span>{t.monthBill}</span>
+              </button>
+              {bal > 0.5 && (
+                <button className="paypill give" onClick={() => setPaying(c.id)}>
+                  <Icon name="hand-holding-dollar" /> <span>{t.receive}</span>
+                </button>
+              )}
+            </div>
           </div>
         );
       })}

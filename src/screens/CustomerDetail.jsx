@@ -5,20 +5,7 @@ import { Balance } from './Customers';
 import CustomerForm from './CustomerForm';
 import PayBox from './PayBox';
 import Icon from '../Icon';
-import { drawBill } from '../bill';
-import ImagePreview from './ImagePreview';
-
-export const shiftMonth = (ym, n) => {
-  const [y, m] = ym.split('-').map(Number);
-  const d = new Date(y, m - 1 + n, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-};
-
-// 03001234567 -> 923001234567 for wa.me links (Pakistan numbers)
-const waNumber = (p = '') => {
-  const d = p.replace(/\D/g, '');
-  return d.startsWith('0') ? '92' + d.slice(1) : d;
-};
+import CustomerBill, { shiftMonth } from './CustomerBill';
 
 export default function CustomerDetail({ id, onBack }) {
   const store = useStore();
@@ -27,7 +14,7 @@ export default function CustomerDetail({ id, onBack }) {
   const c = store.customerById(id);
   const [month, setMonth] = useState(today().slice(0, 7));
   const [mode, setMode] = useState(null); // 'edit' | 'pay'
-  const [preview, setPreview] = useState(null); // canvas of the bill being previewed
+  const [billOpen, setBillOpen] = useState(false);
 
   if (!c) return null;
 
@@ -44,38 +31,9 @@ export default function CustomerDetail({ id, onBack }) {
     year: 'numeric',
   });
 
-  const sendBill = () => {
-    const text = t.billText(c.name, monthName, m.liters, money(m.amount), money(Math.max(0, bal)));
-    window.open(`https://wa.me/${waNumber(c.phone)}?text=${encodeURIComponent(text)}`);
-  };
-
-  const showBill = async () => {
-    const rows = days.map((d) => ({
-      label: new Date(d + 'T00:00:00').toLocaleDateString(data.lang === 'ur' ? 'ur-PK' : 'en-PK', { day: 'numeric', month: 'short' }),
-      ...data.deliveries[d][id],
-    }));
-    setPreview(
-      await drawBill({
-        t,
-        lang: data.lang,
-        font: data.urduFont,
-        seller: data.auth,
-        customer: c,
-        monthName,
-        rows,
-        totals: { liters: m.liters, amount: m.amount, paid: mPaid, due: bal },
-      }),
-    );
-  };
-
   if (mode === 'edit') return <CustomerForm customer={c} onDone={() => setMode(null)} />;
 
-  if (preview)
-    return (
-      <ImagePreview canvas={preview} fileName={`bill-${month}-${c.id}.png`} title={`${c.name} · ${monthName}`} onClose={() => setPreview(null)}>
-        {c.phone && <button className="btn wa" onClick={sendBill}><Icon name="whatsapp" brand /> {t.sendText}</button>}
-      </ImagePreview>
-    );
+  if (billOpen) return <CustomerBill id={id} initialMonth={month} onClose={() => setBillOpen(false)} />;
 
   return (
     <>
@@ -124,7 +82,7 @@ export default function CustomerDetail({ id, onBack }) {
       ) : (
         <button className="btn green solid wide" onClick={() => setMode('pay')}><Icon name="hand-holding-dollar" /> {t.receive}</button>
       )}
-      <button className="btn blue wide" onClick={showBill} disabled={days.length === 0}><Icon name="image" /> {t.shareBill}</button>
+      <button className="btn blue wide" onClick={() => setBillOpen(true)}><Icon name="image" /> {t.shareBill}</button>
     </>
   );
 }

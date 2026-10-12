@@ -3,8 +3,7 @@ import { useStore, today } from '../store';
 import { useT } from '../i18n';
 import { drawReport } from '../bill';
 import ImagePreview from './ImagePreview';
-import Icon from '../Icon';
-import { shiftMonth } from './CustomerDetail';
+import { MonthBar } from './CustomerBill';
 
 // All customers' milk, bill, payments and dues for one month, as a shareable image.
 export default function MonthlyReport({ onClose }) {
@@ -52,15 +51,7 @@ export default function MonthlyReport({ onClose }) {
       fileName={`report-${month}.png`}
       title={`${t.monthlyReport} · ${monthName}`}
       onClose={onClose}
-      header={
-        <header className="datebar preview-head">
-          <button className="arrow" onClick={() => setMonth(shiftMonth(month, -1))}><Icon name="chevron-left" flip /></button>
-          <div className="big">{monthName}</div>
-          <button className="arrow" disabled={month >= today().slice(0, 7)} onClick={() => setMonth(shiftMonth(month, 1))}>
-            <Icon name="chevron-right" flip />
-          </button>
-        </header>
-      }
+      header={<MonthBar month={month} onChange={setMonth} label={monthName} />}
     />
   );
 }

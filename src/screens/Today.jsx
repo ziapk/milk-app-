@@ -5,6 +5,7 @@ import Icon from "../Icon";
 import SearchBar from "./SearchBar";
 import PayBox from "./PayBox";
 import CustomerForm from "./CustomerForm";
+import CustomerBill from "./CustomerBill";
 import { filterCustomers } from "../search";
 
 const STEP = 0.5;
@@ -16,6 +17,7 @@ export default function Today() {
   const [query, setQuery] = useState("");
   const [paying, setPaying] = useState(null); // customer id taking money on the spot
   const [adding, setAdding] = useState(false);
+  const [billFor, setBillFor] = useState(null);
   const day = data.deliveries[date] || {};
   const list = data.customers.filter((c) => c.active);
 
@@ -32,6 +34,8 @@ export default function Today() {
       month: "long",
     },
   );
+
+  if (billFor) return <CustomerBill id={billFor} initialMonth={date.slice(0, 7)} onClose={() => setBillFor(null)} />;
 
   return (
     <>
@@ -121,14 +125,19 @@ export default function Today() {
                   <Icon name="plus" />
                 </button>
               </div>
-              <button
-                className={`paypill ${due > 0 ? "due" : ""}`}
-                aria-label={t.receive}
-                onClick={() => setPaying(c.id)}
-              >
-                <Icon name="rupee-sign" />
-                {due > 0 && <span>{money(due)}</span>}
-              </button>
+              <div className="pills">
+                <button
+                  className={`paypill ${due > 0 ? "due" : ""}`}
+                  aria-label={t.receive}
+                  onClick={() => setPaying(c.id)}
+                >
+                  <Icon name="rupee-sign" />
+                  {due > 0 && <span>{money(due)}</span>}
+                </button>
+                <button className="paypill bill" aria-label={t.monthBill} onClick={() => setBillFor(c.id)}>
+                  <Icon name="file-invoice" />
+                </button>
+              </div>
             </div>
             <button
               className={`mark skip ${state === "skipped" ? "on" : ""}`}
