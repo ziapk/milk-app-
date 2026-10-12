@@ -16,11 +16,11 @@ import CustomerForm from './screens/CustomerForm';
 const TABS = [
   ['today', 'delivery', null],
   ['customers', 'customers', 'users'],
+  ['payments', 'payments', 'money-bill-wave'],
   ['expenses', 'expenses', 'receipt'],
 ];
 const MENU = [
   ['stats', 'chart-pie'],
-  ['payments', 'money-bill-wave'],
   ['more', 'gear', 'settings'],
 ];
 
