@@ -127,6 +127,9 @@ export default function Today() {
               </div>
             </div>
             <div className="cardfoot">
+              <button className="paypill bill" aria-label={t.monthBill} onClick={() => setBillFor(c.id)}>
+                <Icon name="file-invoice" />
+              </button>
               <button
                 className={`paypill ${due > 0 ? "due" : ""}`}
                 aria-label={t.receive}
@@ -134,9 +137,6 @@ export default function Today() {
               >
                 <Icon name="money-bill-wave" />
                 {due > 0 && <span>{money(due)}</span>}
-              </button>
-              <button className="paypill bill" aria-label={t.monthBill} onClick={() => setBillFor(c.id)}>
-                <Icon name="file-invoice" />
               </button>
               <button
                 className={`mark skip push ${state === "skipped" ? "on" : ""}`}

@@ -65,7 +65,7 @@ export default function Customers({ onOpen }) {
               </button>
               {bal > 0.5 && (
                 <button className="paypill give push" onClick={() => setPaying(c.id)}>
-                  <Icon name="hand-holding-dollar" /> <span>{t.receive}</span>
+                  <Icon name="money-bill-wave" /> <span>{t.receive}</span>
                 </button>
               )}
             </div>

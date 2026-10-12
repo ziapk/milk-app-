@@ -58,7 +58,7 @@ export default function CustomerDetail({ id, onBack }) {
       <div className="stats">
         <div className="stat blue"><small><Icon name="bottle-droplet" /> {t.liters}</small><b>{m.liters}</b></div>
         <div className="stat"><small><Icon name="file-invoice" /> {t.bill}</small><b>{money(m.amount)}</b></div>
-        <div className="stat green"><small><Icon name="hand-holding-dollar" /></small><b>{money(mPaid)}</b></div>
+        <div className="stat green"><small><Icon name="money-bill-wave" /></small><b>{money(mPaid)}</b></div>
       </div>
 
       {days.length > 0 && (
@@ -80,7 +80,7 @@ export default function CustomerDetail({ id, onBack }) {
       {mode === 'pay' ? (
         <PayBox customerId={id} onDone={() => setMode(null)} />
       ) : (
-        <button className="btn green solid wide" onClick={() => setMode('pay')}><Icon name="hand-holding-dollar" /> {t.receive}</button>
+        <button className="btn green solid wide" onClick={() => setMode('pay')}><Icon name="money-bill-wave" /> {t.receive}</button>
       )}
       <button className="btn blue wide" onClick={() => setBillOpen(true)}><Icon name="image" /> {t.shareBill}</button>
     </>

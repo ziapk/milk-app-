@@ -45,7 +45,7 @@ export default function Expenses() {
     <>
       <h1><Icon name="receipt" /> {t.expenses}</h1>
       <div className={`stat span-full ${cash >= 0 ? 'green' : 'red'}`}>
-        <small><Icon name="wallet" /> {t.cashInHand}</small>
+        <small><Icon name="money-bill-wave" /> {t.cashInHand}</small>
         <b>{money(cash)}</b>
       </div>
       <div className="stats">
