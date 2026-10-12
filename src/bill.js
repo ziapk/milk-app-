@@ -124,7 +124,7 @@ export function drawExpenses({ t, lang, font, seller, monthName, rows, total }) 
       { label: t.amount, x: W - PAD - 16, align: 'end', bold: true },
     ],
     rows: rows.map((r) => ({ cells: [r.label, r.category, r.note, money(r.amount)] })),
-    totals: [{ label: t.spentMonth, value: `${t.rs} ${money(total)}`, color: '#d93b3b', big: true }],
+    totals: [{ label: t.totalSpent, value: `${t.rs} ${money(total)}`, color: '#d93b3b', big: true }],
   });
 }
 
