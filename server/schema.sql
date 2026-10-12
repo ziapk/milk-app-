@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS customers (
   rate DECIMAL(10,2) NOT NULL DEFAULT 0,
   default_qty DECIMAL(6,2) NOT NULL DEFAULT 0,
   active TINYINT(1) NOT NULL DEFAULT 1,
+  deleted TINYINT(1) NOT NULL DEFAULT 0,
   updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (distributor_id, id),
   KEY idx_customers_sync (distributor_id, updated_at),

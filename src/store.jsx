@@ -52,10 +52,12 @@ const newestFirst = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
 // Apply rows from the server, except rows the phone changed again while the request was in flight.
 function mergeFromServer(d, res, pending) {
   const customers = [...d.customers];
-  for (const c of res.customers) {
+  for (const { deleted, ...c } of res.customers) {
     if (pending.has(`c:${c.id}`)) continue;
     const i = customers.findIndex((x) => x.id === c.id);
-    if (i >= 0) customers[i] = c;
+    if (deleted) {
+      if (i >= 0) customers.splice(i, 1);
+    } else if (i >= 0) customers[i] = c;
     else customers.push(c);
   }
 
@@ -205,6 +207,30 @@ export function StoreProvider({ children }) {
           const row = c.id ? { ...d.customers.find((x) => x.id === c.id), ...c } : { active: true, ...c, id: uid() };
           const customers = c.id ? d.customers.map((x) => (x.id === c.id ? row : x)) : [...d.customers, row];
           return { ...d, customers, queue: enqueue(d.queue, { t: 'c', row }) };
+        }),
+
+      // Removes the customer together with their milk entries and payments (on this phone and the server).
+      deleteCustomer: (id) =>
+        setData((d) => {
+          const c = d.customers.find((x) => x.id === id);
+          if (!c) return d;
+          let queue = enqueue(d.queue, { t: 'c', row: { ...c, deleted: true } });
+          const deliveries = {};
+          for (const [date, day] of Object.entries(d.deliveries)) {
+            if (!day[id]) {
+              deliveries[date] = day;
+              continue;
+            }
+            const { [id]: _, ...rest } = day;
+            deliveries[date] = rest;
+            queue = enqueue(queue, { t: 'd', row: { customerId: id, date, qty: 0, rate: 0, deleted: true } });
+          }
+          const payments = d.payments.filter((p) => {
+            if (p.customerId !== id) return true;
+            queue = enqueue(queue, { t: 'p', row: { ...p, deleted: true } });
+            return false;
+          });
+          return { ...d, customers: d.customers.filter((x) => x.id !== id), deliveries, payments, queue };
         }),
 
       // qty === null removes the entry (back to "not marked")

@@ -9,7 +9,7 @@ import CustomerBill, { shiftMonth } from './CustomerBill';
 
 export default function CustomerDetail({ id, onBack }) {
   const store = useStore();
-  const { data, billed, paid, balance } = store;
+  const { data, billed, paid, balance, deleteCustomer } = store;
   const t = useT();
   const c = store.customerById(id);
   const [month, setMonth] = useState(today().slice(0, 7));
@@ -83,6 +83,16 @@ export default function CustomerDetail({ id, onBack }) {
         <button className="btn green solid wide" onClick={() => setMode('pay')}><Icon name="money-bill-wave" /> {t.receive}</button>
       )}
       <button className="btn blue wide" onClick={() => setBillOpen(true)}><Icon name="image" /> {t.shareBill}</button>
+      <button
+        className="linkbtn red deletelink"
+        onClick={() => {
+          if (!confirm(t.deleteCustomerConfirm(c.name))) return;
+          deleteCustomer(id);
+          onBack();
+        }}
+      >
+        <Icon name="trash" /> {t.deleteCustomer}
+      </button>
     </>
   );
 }

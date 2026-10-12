@@ -10,7 +10,7 @@ import MonthlyReport from './MonthlyReport';
 import CustomerBill from './CustomerBill';
 
 export default function Customers({ onOpen }) {
-  const { data, balance } = useStore();
+  const { data, balance, deleteCustomer } = useStore();
   const t = useT();
   const [adding, setAdding] = useState(false);
   const [paying, setPaying] = useState(null);
@@ -62,6 +62,13 @@ export default function Customers({ onOpen }) {
             <div className="cardfoot">
               <button className="paypill bill" onClick={() => setBillFor(c.id)}>
                 <Icon name="file-invoice" /> <span>{t.monthBill}</span>
+              </button>
+              <button
+                className="paypill del"
+                aria-label={t.deleteCustomer}
+                onClick={() => confirm(t.deleteCustomerConfirm(c.name)) && deleteCustomer(c.id)}
+              >
+                <Icon name="trash" />
               </button>
               {bal > 0.5 && (
                 <button className="paypill give push" onClick={() => setPaying(c.id)}>

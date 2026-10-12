@@ -297,3 +297,5 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 .segments button.on { background: var(--card); color: var(--blue); box-shadow: 0 1px 3px #0002; }
 .plain .grow { text-align: start; }
 .span-full .sharebtn { align-self: center; margin-top: 8px; }
+.paypill.del { background: #fde8e8; color: var(--red); }
+.deletelink { margin: 16px auto 8px; }

@@ -25,13 +25,13 @@ export const sync = async (req, res) => {
 
     for (const c of customers) {
       await conn.execute(
-        `INSERT INTO customers (distributor_id, id, name, phone, address, rate, default_qty, active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO customers (distributor_id, id, name, phone, address, rate, default_qty, active, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE name = VALUES(name), phone = VALUES(phone), address = VALUES(address),
            rate = VALUES(rate), default_qty = VALUES(default_qty), active = VALUES(active),
-           updated_at = CURRENT_TIMESTAMP(3)`,
+           deleted = VALUES(deleted), updated_at = CURRENT_TIMESTAMP(3)`,
         [distributorId, c.id, String(c.name).trim().slice(0, 100), String(c.phone || "").slice(0, 20),
-         String(c.address || "").slice(0, 255), Number(c.rate), Number(c.defaultQty), flag(c.active)],
+         String(c.address || "").slice(0, 255), Number(c.rate), Number(c.defaultQty), flag(c.active), flag(c.deleted)],
       );
     }
 
@@ -80,7 +80,7 @@ export const sync = async (req, res) => {
   const after = `distributor_id = ? AND updated_at > ? - INTERVAL ${OVERLAP_SECONDS} SECOND`;
 
   const [outCustomers] = await db.execute(
-    `SELECT id, name, phone, address, rate, default_qty AS defaultQty, active = 1 AS active
+    `SELECT id, name, phone, address, rate, default_qty AS defaultQty, active = 1 AS active, deleted
      FROM customers WHERE ${after}`,
     args,
   );
