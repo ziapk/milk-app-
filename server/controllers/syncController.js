@@ -74,7 +74,7 @@ export const sync = async (req, res) => {
     conn.release();
   }
 
-  const [[{ cursor }]] = await db.query(`SELECT NOW(3) AS cursor`);
+  const [[{ cursor }]] = await db.query(`SELECT NOW(3) AS \`cursor\``);
   const from = since || "1970-01-02 00:00:00";
   const args = [distributorId, from];
   const after = `distributor_id = ? AND updated_at > ? - INTERVAL ${OVERLAP_SECONDS} SECOND`;
