@@ -117,7 +117,9 @@ export function StoreProvider({ children }) {
     try {
       const res = await api('/sync', { since: d.cursor, changes }, d.auth.token);
       setData((cur) => {
-        const queue = cur.queue.filter((q) => !sent.includes(q));
+        // Keep the same array when nothing was removed, so the queue effect doesn't re-trigger sync.
+        const left = cur.queue.filter((q) => !sent.includes(q));
+        const queue = left.length === cur.queue.length ? cur.queue : left;
         return { ...mergeFromServer(cur, res, new Set(queue.map(keyOf))), queue };
       });
       setSyncState('ok');
