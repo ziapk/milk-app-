@@ -1,7 +1,7 @@
 {
   "name": "milk-app",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -9,11 +9,16 @@
     "preview": "vite preview --host",
     "apk": "vite build --mode android && CAP_HTTP=1 cap sync android && cd android && ./gradlew assembleDebug",
     "apk:release": "vite build --mode android && cap sync android && cd android && ./gradlew assembleRelease",
-    "icons": "node scripts/icons.mjs"
+    "icons": "node scripts/icons.mjs",
+    "aab": "vite build --mode android && cap sync android && cd android && ./gradlew bundleRelease",
+    "bump": "npm version patch --no-git-tag-version"
   },
   "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
     "@capacitor/android": "^7.6.9",
     "@capacitor/core": "^7.6.9",
+    "@capacitor/filesystem": "^7.1.9",
+    "@capacitor/share": "^7.0.4",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

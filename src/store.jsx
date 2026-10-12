@@ -180,6 +180,15 @@ export function StoreProvider({ children }) {
       // Called after a successful login/register. Anything entered before logging in gets uploaded.
       setAuth: (auth) => setData((d) => ({ ...d, auth, cursor: null, queue: queueEverything(d) })),
 
+      // Ends every other session for this account; this phone stays logged in.
+      logoutOthers: () => api('/auth/logout-others', {}, dataRef.current.auth?.token),
+
+      // Deletes the account and all its data on the server, then clears this phone.
+      deleteAccount: async (pin) => {
+        await api('/auth/delete-account', { pin }, dataRef.current.auth?.token);
+        logoutLocal();
+      },
+
       logout: async () => {
         const auth = dataRef.current.auth;
         logoutLocal();
@@ -210,6 +219,33 @@ export function StoreProvider({ children }) {
             row = { customerId: cid, date, ...day[cid] };
           }
           return { ...d, deliveries: { ...d.deliveries, [date]: day }, queue: enqueue(d.queue, { t: 'd', row }) };
+        }),
+
+      // Marks every active customer not yet marked on `date` as given their usual quantity.
+      markAll: (date) =>
+        setData((d) => {
+          const day = { ...(d.deliveries[date] || {}) };
+          let queue = d.queue;
+          for (const c of d.customers) {
+            if (!c.active || day[c.id] || !(c.defaultQty > 0)) continue;
+            day[c.id] = { qty: c.defaultQty, rate: c.rate };
+            queue = enqueue(queue, { t: 'd', row: { customerId: c.id, date, ...day[c.id] } });
+          }
+          return { ...d, deliveries: { ...d.deliveries, [date]: day }, queue };
+        }),
+
+      updatePayment: (id, patch) =>
+        setData((d) => {
+          const row = { ...d.payments.find((x) => x.id === id), ...patch };
+          const payments = d.payments.map((x) => (x.id === id ? row : x)).sort(newestFirst);
+          return { ...d, payments, queue: enqueue(d.queue, { t: 'p', row }) };
+        }),
+
+      updateExpense: (id, patch) =>
+        setData((d) => {
+          const row = { ...d.expenses.find((x) => x.id === id), ...patch };
+          const expenses = d.expenses.map((x) => (x.id === id ? row : x)).sort(newestFirst);
+          return { ...d, expenses, queue: enqueue(d.queue, { t: 'e', row }) };
         }),
 
       addPayment: (customerId, amount, date = today()) =>

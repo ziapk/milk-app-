@@ -3,6 +3,7 @@ import cors from "cors";
 import path from "node:path";
 import authRoutes from "./routes/authRoutes.js";
 import syncRoutes from "./routes/syncRoutes.js";
+import { migrate } from "./migrate.js";
 
 const app = express();
 
@@ -19,6 +20,8 @@ app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: "server_error" });
 });
+
+await migrate();
 
 const port = Number(process.env.PORT) || 8000;
 app.listen(port, () => {

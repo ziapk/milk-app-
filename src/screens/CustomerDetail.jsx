@@ -5,6 +5,7 @@ import { Balance } from './Customers';
 import CustomerForm from './CustomerForm';
 import PayBox from './PayBox';
 import Icon from '../Icon';
+import { drawBill, shareBill } from '../bill';
 
 const shiftMonth = (ym, n) => {
   const [y, m] = ym.split('-').map(Number);
@@ -25,6 +26,7 @@ export default function CustomerDetail({ id, onBack }) {
   const c = store.customerById(id);
   const [month, setMonth] = useState(today().slice(0, 7));
   const [mode, setMode] = useState(null); // 'edit' | 'pay'
+  const [sharing, setSharing] = useState(false);
 
   if (!c) return null;
 
@@ -44,6 +46,30 @@ export default function CustomerDetail({ id, onBack }) {
   const sendBill = () => {
     const text = t.billText(c.name, monthName, m.liters, money(m.amount), money(Math.max(0, bal)));
     window.open(`https://wa.me/${waNumber(c.phone)}?text=${encodeURIComponent(text)}`);
+  };
+
+  const shareImage = async () => {
+    setSharing(true);
+    try {
+      const rows = days.map((d) => ({
+        label: new Date(d + 'T00:00:00').toLocaleDateString(data.lang === 'ur' ? 'ur-PK' : 'en-PK', { day: 'numeric', month: 'short' }),
+        ...data.deliveries[d][id],
+      }));
+      const canvas = await drawBill({
+        t,
+        lang: data.lang,
+        seller: data.auth,
+        customer: c,
+        monthName,
+        rows,
+        totals: { liters: m.liters, amount: m.amount, paid: mPaid, due: bal },
+      });
+      await shareBill(canvas, `bill-${month}-${c.id}.png`, `${c.name} · ${monthName}`);
+    } catch {
+      // Closing the share sheet without picking an app also lands here.
+    } finally {
+      setSharing(false);
+    }
   };
 
   if (mode === 'edit') return <CustomerForm customer={c} onDone={() => setMode(null)} />;
@@ -82,7 +108,12 @@ export default function CustomerDetail({ id, onBack }) {
         <div className="stat green"><small><Icon name="hand-holding-dollar" /></small><b>{money(mPaid)}</b></div>
       </div>
 
-      {c.phone && <button className="btn wa wide" onClick={sendBill}><Icon name="whatsapp" brand /> {t.sendBill}</button>}
+      <div className="two">
+        <button className="btn blue" onClick={shareImage} disabled={sharing || days.length === 0}>
+          <Icon name={sharing ? 'spinner' : 'image'} spin={sharing} /> {t.shareBill}
+        </button>
+        {c.phone && <button className="btn wa" onClick={sendBill}><Icon name="whatsapp" brand /> {t.sendText}</button>}
+      </div>
 
       <div className="card">
         <div className="days">

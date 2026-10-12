@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { promisify } from "node:util";
 import { db } from "../db.js";
+import { SESSION_DAYS } from "./requireAuth.js";
 
 const scrypt = promisify(crypto.scrypt);
 const MAX_ATTEMPTS = 5;
@@ -22,6 +23,10 @@ async function checkPin(pin, stored) {
 }
 
 async function newSession(distributorId) {
+  await db.execute(
+    `DELETE FROM sessions WHERE distributor_id = ? AND last_used_at < NOW() - INTERVAL ${SESSION_DAYS} DAY`,
+    [distributorId],
+  );
   const token = crypto.randomBytes(32).toString("hex");
   await db.execute(
     `INSERT INTO sessions (token, distributor_id) VALUES (?, ?)`,
@@ -89,5 +94,20 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   await db.execute(`DELETE FROM sessions WHERE token = ?`, [req.token]);
+  res.json({ status: true });
+};
+
+export const logoutOthers = async (req, res) => {
+  await db.execute(`DELETE FROM sessions WHERE distributor_id = ? AND token <> ?`, [req.distributorId, req.token]);
+  res.json({ status: true });
+};
+
+// Google Play requires in-app account deletion. Every data table cascades from distributors.
+export const deleteAccount = async (req, res) => {
+  const [rows] = await db.execute(`SELECT pin_hash FROM distributors WHERE id = ?`, [req.distributorId]);
+  if (!rows[0] || !validPin(req.body?.pin) || !(await checkPin(req.body.pin, rows[0].pin_hash))) {
+    return res.status(401).json({ error: "wrong_pin" });
+  }
+  await db.execute(`DELETE FROM distributors WHERE id = ?`, [req.distributorId]);
   res.json({ status: true });
 };

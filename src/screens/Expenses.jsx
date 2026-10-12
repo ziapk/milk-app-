@@ -10,6 +10,7 @@ export default function Expenses() {
   const { data, deleteExpense } = useStore();
   const t = useT();
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(null);
 
   const month = today().slice(0, 7);
   const monthExpenses = data.expenses.filter((e) => e.date.startsWith(month));
@@ -37,17 +38,24 @@ export default function Expenses() {
       )}
 
       {monthExpenses.length > 0 && <h2>{t.expensesMonth}</h2>}
-      {monthExpenses.map((e) => (
-        <div key={e.id} className="card row small">
-          <span className="catico"><Icon name={catIcon[e.category] || 'box'} /></span>
-          <div className="grow">
-            <div>{t.cat[e.category] || t.cat.other}{e.note && ` · ${e.note}`}</div>
-            <div className="muted" dir="ltr">{e.date}</div>
+      {monthExpenses.map((e) =>
+        editing === e.id ? (
+          <ExpenseBox key={e.id} expense={e} onDone={() => setEditing(null)} />
+        ) : (
+          <div key={e.id} className="card row small">
+            <button className="grow link plain" onClick={() => setEditing(e.id)}>
+              <span className="catico"><Icon name={catIcon[e.category] || 'box'} /></span>
+              <div className="grow">
+                <div>{t.cat[e.category] || t.cat.other}{e.note && ` · ${e.note}`}</div>
+                <div className="muted" dir="ltr">{e.date}</div>
+              </div>
+              <b className="redtext">{t.rs} {money(e.amount)}</b>
+              <Icon name="pen" className="muted" />
+            </button>
+            <button className="x" onClick={() => confirm(t.deleteExpenseConfirm) && deleteExpense(e.id)}><Icon name="xmark" /></button>
           </div>
-          <b className="redtext">{t.rs} {money(e.amount)}</b>
-          <button className="x" onClick={() => confirm(t.deleteExpenseConfirm) && deleteExpense(e.id)}><Icon name="xmark" /></button>
-        </div>
-      ))}
+        ),
+      )}
     </>
   );
 }

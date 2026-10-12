@@ -4,14 +4,17 @@ import { useT, money } from '../i18n';
 import CustomerForm from './CustomerForm';
 import PayBox from './PayBox';
 import Icon from '../Icon';
+import SearchBar from './SearchBar';
+import { filterCustomers } from '../search';
 
 export default function Customers({ onOpen }) {
   const { data, balance } = useStore();
   const t = useT();
   const [adding, setAdding] = useState(false);
   const [paying, setPaying] = useState(null);
+  const [query, setQuery] = useState('');
 
-  const list = [...data.customers].sort((a, b) => b.active - a.active || a.name.localeCompare(b.name));
+  const list = filterCustomers(data.customers, query).sort((a, b) => b.active - a.active || a.name.localeCompare(b.name));
 
   return (
     <>
@@ -21,6 +24,8 @@ export default function Customers({ onOpen }) {
       ) : (
         <button className="btn blue solid wide" onClick={() => setAdding(true)}><Icon name="user-plus" /> {t.addCustomer}</button>
       )}
+      {data.customers.length > 0 && <SearchBar value={query} onChange={setQuery} />}
+      {query && list.length === 0 && <p className="empty">{t.noMatch}</p>}
       {list.map((c) => {
         const bal = balance(c.id);
         if (paying === c.id)

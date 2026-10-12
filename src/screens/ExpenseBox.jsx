@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useStore } from '../store';
+import { useStore, today } from '../store';
 import { useT } from '../i18n';
 import AmountInput from './AmountInput';
 import Icon from '../Icon';
@@ -12,16 +12,20 @@ export const CATEGORIES = [
   ['other', 'box'],
 ];
 
-export default function ExpenseBox({ onDone }) {
-  const { addExpense } = useStore();
+// New expense, or edit an existing `expense`.
+export default function ExpenseBox({ expense, onDone }) {
+  const { addExpense, updateExpense } = useStore();
   const t = useT();
-  const [category, setCategory] = useState('feed');
-  const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
+  const [category, setCategory] = useState(expense?.category || 'feed');
+  const [amount, setAmount] = useState(expense ? String(expense.amount) : '');
+  const [note, setNote] = useState(expense?.note || '');
+  const [date, setDate] = useState(expense?.date || today());
 
   const save = () => {
     const n = Number(amount);
-    if (n > 0) addExpense({ category, amount: n, note: note.trim() });
+    const row = { category, amount: n, note: note.trim() };
+    if (n > 0 && expense) updateExpense(expense.id, { ...row, date });
+    else if (n > 0) addExpense(row);
     onDone();
   };
 
@@ -38,6 +42,11 @@ export default function ExpenseBox({ onDone }) {
       <label><Icon name="money-bill-wave" /> {t.amount}</label>
       <AmountInput value={amount} onChange={setAmount} />
       <label><span><Icon name="note-sticky" /> {t.note}</span><input value={note} onChange={(e) => setNote(e.target.value)} /></label>
+      {expense && (
+        <label><span><Icon name="calendar-days" /> {t.date}</span>
+          <input type="date" value={date} max={today()} onChange={(e) => e.target.value && setDate(e.target.value)} />
+        </label>
+      )}
       <div className="two">
         <button className="btn red solid" onClick={save}><Icon name="thumbs-up" /> {t.save}</button>
         <button className="btn" onClick={onDone}>{t.cancel}</button>

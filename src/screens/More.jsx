@@ -1,14 +1,37 @@
+import { useState } from 'react';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import Icon from '../Icon';
 
 export default function More() {
-  const { data, setLang, logout, sync, syncState } = useStore();
+  const { data, setLang, logout, logoutOthers, deleteAccount, sync, syncState } = useStore();
   const t = useT();
   const pending = data.queue.length;
+  const [note, setNote] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [pin, setPin] = useState('');
 
   const doLogout = () => {
     if (confirm(pending ? t.logoutUnsynced : t.logoutConfirm)) logout();
+  };
+
+  const doLogoutOthers = async () => {
+    if (!confirm(t.logoutOthersConfirm)) return;
+    try {
+      await logoutOthers();
+      setNote(t.logoutOthersDone);
+    } catch (e) {
+      setNote(t.errors[e.code] || t.errors.server_error);
+    }
+  };
+
+  const doDelete = async () => {
+    if (!confirm(t.deleteAccountConfirm)) return;
+    try {
+      await deleteAccount(pin);
+    } catch (e) {
+      setNote(t.errors[e.code] || t.errors.server_error);
+    }
   };
 
   return (
@@ -39,7 +62,35 @@ export default function More() {
           <button className={`btn ${data.lang === 'en' ? 'blue solid' : ''}`} onClick={() => setLang('en')}>English</button>
         </div>
       </div>
+      <div className="card form">
+        <div className="name"><Icon name="shield-halved" /> {t.security}</div>
+        <button className="btn wide" onClick={doLogoutOthers}><Icon name="mobile-screen" /> {t.logoutOthers}</button>
+        {note && <div className="muted">{note}</div>}
+      </div>
       <button className="btn red wide" onClick={doLogout}><Icon name="right-from-bracket" flip /> {t.logout}</button>
+
+      <div className="card form danger">
+        {deleting ? (
+          <>
+            <div className="muted">{t.deleteAccountHelp}</div>
+            <label><span>{t.pin}</span>
+              <input className="pinbox" type="password" inputMode="numeric" maxLength={6} value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
+            </label>
+            <div className="two">
+              <button className="btn red solid" disabled={pin.length < 4} onClick={doDelete}><Icon name="trash" /> {t.deleteAccount}</button>
+              <button className="btn" onClick={() => { setDeleting(false); setPin(''); }}>{t.cancel}</button>
+            </div>
+          </>
+        ) : (
+          <button className="linkbtn red" onClick={() => setDeleting(true)}><Icon name="trash" /> {t.deleteAccount}</button>
+        )}
+      </div>
+
+      <p className="muted center footer">
+        <a href="privacy.html" target="_blank" rel="noreferrer">{t.privacy}</a>
+        <span dir="ltr">v{__APP_VERSION__}</span>
+      </p>
     </>
   );
 }

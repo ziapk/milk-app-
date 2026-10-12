@@ -2,18 +2,24 @@ import { useState } from "react";
 import { useStore, today, addDays } from "../store";
 import { useT } from "../i18n";
 import Icon from "../Icon";
+import SearchBar from "./SearchBar";
+import { filterCustomers } from "../search";
 
 const STEP = 0.5;
 
 export default function Today() {
-  const { data, setDelivery } = useStore();
+  const { data, setDelivery, markAll } = useStore();
   const t = useT();
   const [date, setDate] = useState(today());
+  const [query, setQuery] = useState("");
   const day = data.deliveries[date] || {};
   const list = data.customers.filter((c) => c.active);
 
   const totalLiters = Object.values(day).reduce((s, d) => s + d.qty, 0);
   const marked = list.filter((c) => day[c.id]).length;
+  const shown = filterCustomers(list, query);
+  const unmarked = list.filter((c) => !day[c.id] && c.defaultQty > 0).length;
+  const doMarkAll = () => confirm(t.markAllConfirm(unmarked)) && markAll(date);
   const label = new Date(date + "T00:00:00").toLocaleDateString(
     data.lang === "ur" ? "ur-PK" : "en-PK",
     {
@@ -58,7 +64,17 @@ export default function Today() {
 
       {list.length === 0 && <p className="empty">{t.noCustomers}</p>}
 
-      {list.map((c) => {
+      {list.length > 0 && <SearchBar value={query} onChange={setQuery} />}
+
+      {unmarked > 0 && !query && (
+        <button className="btn green wide" onClick={doMarkAll}>
+          <Icon name="check-double" /> {t.markAll} ({unmarked})
+        </button>
+      )}
+
+      {query && shown.length === 0 && <p className="empty">{t.noMatch}</p>}
+
+      {shown.map((c) => {
         const entry = day[c.id];
         const qty = entry ? entry.qty : c.defaultQty;
         const state = !entry ? "pending" : entry.qty > 0 ? "done" : "skipped";
