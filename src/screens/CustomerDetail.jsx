@@ -6,6 +6,7 @@ import CustomerForm from './CustomerForm';
 import PayBox from './PayBox';
 import Icon from '../Icon';
 import CustomerBill, { shiftMonth } from './CustomerBill';
+import ActiveSwitch from './ActiveSwitch';
 
 export default function CustomerDetail({ id, onBack }) {
   const store = useStore();
@@ -47,6 +48,7 @@ export default function CustomerDetail({ id, onBack }) {
         <Balance amount={bal} />
         {c.address && <div className="muted"><Icon name="house" /> {c.address}</div>}
         {c.phone && <a className="linkbtn blue" href={`tel:${c.phone}`} dir="ltr"><Icon name="phone" /> {c.phone}</a>}
+        <ActiveSwitch customer={c} />
       </div>
 
       <header className="datebar">

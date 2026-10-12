@@ -8,6 +8,7 @@ import SearchBar from './SearchBar';
 import { filterCustomers } from '../search';
 import MonthlyReport from './MonthlyReport';
 import CustomerBill from './CustomerBill';
+import ActiveSwitch from './ActiveSwitch';
 
 export default function Customers({ onOpen }) {
   const { data, balance, deleteCustomer } = useStore();
@@ -60,8 +61,9 @@ export default function Customers({ onOpen }) {
               <Balance amount={bal} />
             </button>
             <div className="cardfoot">
-              <button className="paypill bill" onClick={() => setBillFor(c.id)}>
-                <Icon name="file-invoice" /> <span>{t.monthBill}</span>
+              <ActiveSwitch customer={c} />
+              <button className="paypill bill" aria-label={t.monthBill} onClick={() => setBillFor(c.id)}>
+                <Icon name="file-invoice" />
               </button>
               <button
                 className="paypill del"

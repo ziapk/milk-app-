@@ -299,3 +299,17 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 .span-full .sharebtn { align-self: center; margin-top: 8px; }
 .paypill.del { background: #fde8e8; color: var(--red); }
 .deletelink { margin: 16px auto 8px; }
+
+/* Active / Stopped switch */
+.switch { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; padding: 4px 2px; font-size: 14px; font-weight: 700; color: var(--muted); }
+.switch .track { position: relative; width: 40px; height: 24px; border-radius: 12px; background: #cbd5e1; transition: background 0.15s; flex: none; }
+.switch .knob { position: absolute; top: 3px; inset-inline-start: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px #0003; transition: inset-inline-start 0.15s; }
+.switch.on { color: var(--green); }
+.switch.on .track { background: var(--green); }
+.switch.on .knob { inset-inline-start: 19px; }
+.custcard.dim { opacity: 1; }
+.custcard.dim > .row { opacity: 0.55; }
+.paypill { white-space: nowrap; flex: none; }
+.cardfoot { flex-wrap: wrap; gap: 6px; }
+.cardfoot .paypill { padding: 0 10px; }
+.cardfoot .switch { gap: 6px; }
