@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+dist-ssr/
+*.apk
+*.aab
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+server/.env
+
+# Android signing keys — never commit these
+*.jks
+*.keystore
+keystore.properties
+android/key.properties
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.suo
+
+# Misc
+coverage/
+.cache/
+*.tsbuildinfo
