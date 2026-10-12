@@ -5,6 +5,7 @@ import { Balance } from './Customers';
 import CustomerForm from './CustomerForm';
 import PayBox from './PayBox';
 import Icon from '../Icon';
+import { useBackClose } from '../back';
 import CustomerBill, { shiftMonth } from './CustomerBill';
 import ActiveSwitch from './ActiveSwitch';
 
@@ -16,6 +17,7 @@ export default function CustomerDetail({ id, onBack }) {
   const [month, setMonth] = useState(today().slice(0, 7));
   const [mode, setMode] = useState(null); // 'edit' | 'pay'
   const [billOpen, setBillOpen] = useState(false);
+  useBackClose(onBack);
 
   if (!c) return null;
 

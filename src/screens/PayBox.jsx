@@ -3,11 +3,13 @@ import { useStore, today } from '../store';
 import { useT, money } from '../i18n';
 import AmountInput from './AmountInput';
 import Icon from '../Icon';
+import { useBackClose } from '../back';
 
 // New payment for `customerId`, or edit an existing `payment`.
 export default function PayBox({ customerId, payment, onDone }) {
   const { balance, addPayment, updatePayment } = useStore();
   const t = useT();
+  useBackClose(onDone);
   const due = Math.max(0, Math.round(balance(customerId ?? payment.customerId)));
   const [amount, setAmount] = useState(payment ? String(payment.amount) : due ? String(due) : '');
   const [date, setDate] = useState(payment ? payment.date : today());

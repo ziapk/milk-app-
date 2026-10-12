@@ -2,7 +2,7 @@ import { useStore } from './store';
 
 const dict = {
   ur: {
-    appName: 'دودھ حساب',
+    appName: 'مو پارٹنر',
     today: 'آج',
     customers: 'گاہک',
     payments: 'وصولی',
@@ -124,7 +124,7 @@ const dict = {
       `السلام علیکم ${c}\n${m} کا دودھ: ${l} لیٹر\nرقم: ${a} روپے\nکل بقایا: ${due} روپے\nشکریہ`,
   },
   en: {
-    appName: 'Milk Hisaab',
+    appName: 'Moo Partner',
     today: 'Today',
     customers: 'Customers',
     payments: 'Payments',

@@ -3,6 +3,7 @@ import { useStore, today } from '../store';
 import { useT, money } from '../i18n';
 import AmountInput from './AmountInput';
 import Icon from '../Icon';
+import { useBackClose } from '../back';
 
 export const CATEGORIES = [
   ['feed', 'wheat-awn'],
@@ -16,6 +17,7 @@ export const CATEGORIES = [
 export default function ExpenseBox({ expense, onDone }) {
   const { data, addExpense, updateExpense } = useStore();
   const t = useT();
+  useBackClose(onDone);
   const [category, setCategory] = useState(expense?.category || 'feed');
   const [amount, setAmount] = useState(expense ? String(expense.amount) : '');
   const [note, setNote] = useState(expense?.note || '');

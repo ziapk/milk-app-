@@ -11,6 +11,7 @@ import Stats from './screens/Stats';
 import Expenses from './screens/Expenses';
 import Icon, { BikeIcon } from './Icon';
 import CustomerForm from './screens/CustomerForm';
+import { useBackClose } from './back';
 
 // Daily-use screens sit in the bottom bar; the rest live in the top-right menu.
 const TABS = [
@@ -31,6 +32,7 @@ export default function App() {
   const [openCustomer, setOpenCustomer] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [adding, setAdding] = useState(false);
+  useBackClose(() => setMenuOpen(false), menuOpen);
 
   useEffect(() => {
     document.documentElement.lang = data.lang;

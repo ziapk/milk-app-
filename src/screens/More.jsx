@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import Icon from '../Icon';
+import { useBackClose } from '../back';
 import { URDU_FONTS } from '../fonts';
 import { canOpenVoiceSettings, openVoiceSettings, voiceLanguage } from '../search';
 
@@ -12,6 +13,7 @@ export default function More() {
   const [note, setNote] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [pin, setPin] = useState('');
+  useBackClose(() => { setDeleting(false); setPin(''); }, deleting);
 
   const doLogout = () => {
     if (confirm(pending ? t.logoutUnsynced : t.logoutConfirm)) logout();

@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import Icon from '../Icon';
+import { useBackClose } from '../back';
 
 export default function CustomerForm({ customer, onDone }) {
   const { saveCustomer } = useStore();
   const t = useT();
+  useBackClose(onDone);
   const [f, setF] = useState(
     customer || { name: '', phone: '', address: '', rate: 200, defaultQty: 1, active: true }
   );

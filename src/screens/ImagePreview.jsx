@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useT } from '../i18n';
 import { shareImage } from '../bill';
 import Icon from '../Icon';
+import { useBackClose } from '../back';
 
 // Full-screen preview of a generated image, so it can be checked before sharing.
 export default function ImagePreview({ canvas, fileName, title, onClose, header, children }) {
   const t = useT();
+  useBackClose(onClose);
   const [busy, setBusy] = useState(false);
   const share = async () => {
     setBusy(true);
