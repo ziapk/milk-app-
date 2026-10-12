@@ -109,7 +109,7 @@ export default function Today() {
           );
         return (
           <div key={c.id} className={`daycard ${state}`}>
-            <div className="grow">
+            <div className="dayhead">
               <div className="dayname">{c.name}</div>
               <div className="stepper">
                 <button
@@ -125,36 +125,36 @@ export default function Today() {
                   <Icon name="plus" />
                 </button>
               </div>
-              <div className="pills">
-                <button
-                  className={`paypill ${due > 0 ? "due" : ""}`}
-                  aria-label={t.receive}
-                  onClick={() => setPaying(c.id)}
-                >
-                  <Icon name="rupee-sign" />
-                  {due > 0 && <span>{money(due)}</span>}
-                </button>
-                <button className="paypill bill" aria-label={t.monthBill} onClick={() => setBillFor(c.id)}>
-                  <Icon name="file-invoice" />
-                </button>
-              </div>
             </div>
-            <button
-              className={`mark skip ${state === "skipped" ? "on" : ""}`}
-              aria-label={t.skip}
-              onClick={() => setDelivery(date, c.id, state === "skipped" ? null : 0)}
-            >
-              <Icon name="xmark" />
-            </button>
-            <button
-              className={`mark give ${state === "done" ? "on" : ""}`}
-              aria-label={t.done}
-              onClick={() =>
-                setDelivery(date, c.id, state === "done" ? null : qty || c.defaultQty)
-              }
-            >
-              <Icon name="check" />
-            </button>
+            <div className="cardfoot">
+              <button
+                className={`paypill ${due > 0 ? "due" : ""}`}
+                aria-label={t.receive}
+                onClick={() => setPaying(c.id)}
+              >
+                <Icon name="money-bill-wave" />
+                {due > 0 && <span>{money(due)}</span>}
+              </button>
+              <button className="paypill bill" aria-label={t.monthBill} onClick={() => setBillFor(c.id)}>
+                <Icon name="file-invoice" />
+              </button>
+              <button
+                className={`mark skip push ${state === "skipped" ? "on" : ""}`}
+                aria-label={t.skip}
+                onClick={() => setDelivery(date, c.id, state === "skipped" ? null : 0)}
+              >
+                <Icon name="xmark" />
+              </button>
+              <button
+                className={`mark give ${state === "done" ? "on" : ""}`}
+                aria-label={t.done}
+                onClick={() =>
+                  setDelivery(date, c.id, state === "done" ? null : qty || c.defaultQty)
+                }
+              >
+                <Icon name="check" />
+              </button>
+            </div>
           </div>
         );
       })}

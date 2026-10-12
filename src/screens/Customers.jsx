@@ -59,12 +59,12 @@ export default function Customers({ onOpen }) {
               </div>
               <Balance amount={bal} />
             </button>
-            <div className="pills">
+            <div className="cardfoot">
               <button className="paypill bill" onClick={() => setBillFor(c.id)}>
                 <Icon name="file-invoice" /> <span>{t.monthBill}</span>
               </button>
               {bal > 0.5 && (
-                <button className="paypill give" onClick={() => setPaying(c.id)}>
+                <button className="paypill give push" onClick={() => setPaying(c.id)}>
                   <Icon name="hand-holding-dollar" /> <span>{t.receive}</span>
                 </button>
               )}
