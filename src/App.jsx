@@ -10,6 +10,7 @@ import Login from './screens/Login';
 import Stats from './screens/Stats';
 import Expenses from './screens/Expenses';
 import Icon, { BikeIcon } from './Icon';
+import CustomerForm from './screens/CustomerForm';
 
 // Daily-use screens sit in the bottom bar; the rest live in the top-right menu.
 const TABS = [
@@ -24,11 +25,12 @@ const MENU = [
 ];
 
 export default function App() {
-  const { data } = useStore();
+  const { data, sync, syncState } = useStore();
   const t = useT();
   const [tab, setTab] = useState('today');
   const [openCustomer, setOpenCustomer] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang = data.lang;
@@ -39,6 +41,7 @@ export default function App() {
   const go = (k) => {
     setOpenCustomer(null);
     setMenuOpen(false);
+    setAdding(false);
     setTab(k);
   };
   const pending = data.queue.length > 0;
@@ -46,7 +49,14 @@ export default function App() {
   if (!data.auth) return <Login />;
 
   let screen;
-  if (openCustomer) screen = <CustomerDetail id={openCustomer} onBack={() => setOpenCustomer(null)} />;
+  if (adding)
+    screen = (
+      <>
+        <h1><Icon name="user-plus" /> {t.addCustomer}</h1>
+        <CustomerForm onDone={() => setAdding(false)} />
+      </>
+    );
+  else if (openCustomer) screen = <CustomerDetail id={openCustomer} onBack={() => setOpenCustomer(null)} />;
   else if (tab === 'today') screen = <Today />;
   else if (tab === 'customers') screen = <Customers onOpen={setOpenCustomer} />;
   else if (tab === 'payments') screen = <Payments />;
@@ -58,9 +68,27 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand"><BikeIcon /> {t.appName}</div>
+        <button
+          className={`menubtn addcust ${adding ? 'on' : ''}`}
+          aria-label={t.addCustomer}
+          onClick={() => {
+            setMenuOpen(false);
+            setAdding(true);
+          }}
+        >
+          <Icon name="user-plus" />
+        </button>
+        <button
+          className={`menubtn syncbtn ${syncState === 'offline' ? 'off' : pending ? 'pending' : ''}`}
+          aria-label={t.syncNow}
+          onClick={sync}
+          disabled={syncState === 'syncing'}
+        >
+          <Icon name={syncState === 'offline' ? 'cloud-arrow-up' : 'rotate'} spin={syncState === 'syncing'} />
+          {pending && <i className="count">{data.queue.length > 99 ? '99+' : data.queue.length}</i>}
+        </button>
         <button className="menubtn" aria-label={t.menu} onClick={() => setMenuOpen((o) => !o)}>
           <Icon name={menuOpen ? 'xmark' : 'bars'} />
-          {pending && <i className="dot" />}
         </button>
         {menuOpen && (
           <>
@@ -69,7 +97,6 @@ export default function App() {
               {MENU.map(([k, icon, label]) => (
                 <button key={k} className={tab === k && !openCustomer ? 'on' : ''} onClick={() => go(k)}>
                   <Icon name={icon} /> {t[label || k]}
-                  {k === 'more' && pending && <i className="dot" />}
                 </button>
               ))}
             </div>

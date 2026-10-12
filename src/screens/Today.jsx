@@ -77,14 +77,7 @@ export default function Today() {
           <Icon name="user-plus" /> {t.addCustomer}
         </button>
       ) : (
-        <div className="searchrow">
-          <div className="grow">
-            <SearchBar value={query} onChange={setQuery} />
-          </div>
-          <button className="addbtn" aria-label={t.addCustomer} onClick={() => setAdding(true)}>
-            <Icon name="user-plus" />
-          </button>
-        </div>
+        <SearchBar value={query} onChange={setQuery} />
       )}
 
       {unmarked > 0 && !query && (
