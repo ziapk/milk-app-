@@ -237,3 +237,5 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
 .linkbtn.blue { color: var(--blue); text-decoration: none; }
 .preview-bar .btn:first-child { flex-basis: 100%; }
 .voiceerr { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 4px 0 8px; }
+.preview-head { margin: 0; padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); background: var(--card); }
+.preview-head + .preview-img { padding-top: 16px; }

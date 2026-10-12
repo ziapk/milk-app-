@@ -8,10 +8,13 @@
   body { font: 17px/1.6 system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px 16px; color: #1b2430; background: #fff; }
   h1 { font-size: 26px; } h2 { font-size: 19px; margin-top: 28px; }
   .ur { direction: rtl; font-family: 'Noto Nastaliq Urdu', serif; line-height: 2.1; border-top: 1px solid #e2e8f0; margin-top: 40px; padding-top: 16px; }
+  .back { position: sticky; top: 0; display: flex; align-items: center; gap: 8px; margin: -24px -16px 8px; padding: 12px 16px;
+    background: #fff; border-bottom: 1px solid #e2e8f0; color: #1e6fd9; font: 700 17px system-ui, sans-serif; text-decoration: none; }
   .todo { background: #fff3cd; padding: 2px 6px; border-radius: 4px; }
 </style>
 </head>
 <body>
+<a class="back" href="./" onclick="if (history.length > 1) { history.back(); return false; }">&larr; Back / واپس</a>
 <h1>Privacy Policy – Doodh Hisaab</h1>
 <p>Last updated: 12 October 2026</p>
 

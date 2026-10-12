@@ -127,6 +127,33 @@ export function drawExpenses({ t, lang, seller, monthName, rows, total }) {
   });
 }
 
+// rows: [{ name, liters, amount, paid, due }] — one per customer active that month.
+export function drawReport({ t, lang, seller, monthName, rows, totals }) {
+  const red = '#d93b3b';
+  const green = '#1a9e55';
+  return drawSheet({
+    t, lang, seller,
+    title: t.monthlyReport,
+    subtitle: `${monthName} · ${rows.length} ${t.customers}`,
+    columns: [
+      { label: t.name, x: PAD + 16, width: 300 },
+      { label: t.liters, x: PAD + 340, bold: true },
+      { label: t.bill, x: PAD + 470 },
+      { label: t.paidShort, x: PAD + 640, color: green },
+      { label: t.due, x: W - PAD - 16, align: 'end', bold: true },
+    ],
+    rows: rows.map((r) => ({
+      cells: [r.name, r.liters, money(r.amount), money(r.paid), money(r.due)],
+    })),
+    totals: [
+      { label: t.totalMilk, value: `${totals.liters} ${t.liters}` },
+      { label: t.bill, value: `${t.rs} ${money(totals.amount)}` },
+      { label: t.collectedMonth, value: `${t.rs} ${money(totals.paid)}`, color: green },
+      { label: t.totalDue, value: `${t.rs} ${money(totals.due)}`, color: totals.due > 0 ? red : green, big: true },
+    ],
+  });
+}
+
 // Opens the phone's share sheet (WhatsApp, etc.) with the image; on desktop it downloads.
 export async function shareImage(canvas, fileName, title) {
   const dataUrl = canvas.toDataURL('image/png');

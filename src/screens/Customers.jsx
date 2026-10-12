@@ -6,6 +6,7 @@ import PayBox from './PayBox';
 import Icon from '../Icon';
 import SearchBar from './SearchBar';
 import { filterCustomers } from '../search';
+import MonthlyReport from './MonthlyReport';
 
 export default function Customers({ onOpen }) {
   const { data, balance } = useStore();
@@ -13,12 +14,20 @@ export default function Customers({ onOpen }) {
   const [adding, setAdding] = useState(false);
   const [paying, setPaying] = useState(null);
   const [query, setQuery] = useState('');
+  const [report, setReport] = useState(false);
 
   const list = filterCustomers(data.customers, query).sort((a, b) => b.active - a.active || a.name.localeCompare(b.name));
 
+  if (report) return <MonthlyReport onClose={() => setReport(false)} />;
+
   return (
     <>
-      <h1><Icon name="users" /> {t.customers}</h1>
+      <div className="listhead">
+        <h1><Icon name="users" /> {t.customers}</h1>
+        {data.customers.length > 0 && (
+          <button className="btn blue compact" onClick={() => setReport(true)}><Icon name="chart-column" /> {t.monthlyReport}</button>
+        )}
+      </div>
       {adding ? (
         <CustomerForm onDone={() => setAdding(false)} />
       ) : (
@@ -48,7 +57,7 @@ export default function Customers({ onOpen }) {
               <Balance amount={bal} />
             </button>
             {bal > 0.5 && (
-              <button className="btn green solid compact" onClick={() => setPaying(c.id)}><Icon name="hand-holding-dollar" /> {t.receive}</button>
+              <button className="mark give on" aria-label={t.receive} onClick={() => setPaying(c.id)}><Icon name="hand-holding-dollar" /></button>
             )}
           </div>
         );

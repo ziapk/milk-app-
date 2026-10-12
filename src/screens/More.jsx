@@ -98,7 +98,7 @@ export default function More() {
       </div>
 
       <p className="muted center footer">
-        <a href="privacy.html" target="_blank" rel="noreferrer">{t.privacy}</a>
+        <a href="privacy.html">{t.privacy}</a>
         <span dir="ltr">v{__APP_VERSION__}</span>
       </p>
     </>

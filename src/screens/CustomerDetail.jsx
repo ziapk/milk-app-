@@ -8,7 +8,7 @@ import Icon from '../Icon';
 import { drawBill } from '../bill';
 import ImagePreview from './ImagePreview';
 
-const shiftMonth = (ym, n) => {
+export const shiftMonth = (ym, n) => {
   const [y, m] = ym.split('-').map(Number);
   const d = new Date(y, m - 1 + n, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;

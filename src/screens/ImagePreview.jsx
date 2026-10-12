@@ -4,7 +4,7 @@ import { shareImage } from '../bill';
 import Icon from '../Icon';
 
 // Full-screen preview of a generated image, so it can be checked before sharing.
-export default function ImagePreview({ canvas, fileName, title, onClose, children }) {
+export default function ImagePreview({ canvas, fileName, title, onClose, header, children }) {
   const t = useT();
   const [busy, setBusy] = useState(false);
   const share = async () => {
@@ -20,6 +20,7 @@ export default function ImagePreview({ canvas, fileName, title, onClose, childre
 
   return (
     <div className="preview">
+      {header}
       <div className="preview-img">
         <img src={canvas.toDataURL('image/png')} alt={title} />
       </div>
