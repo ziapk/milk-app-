@@ -33,6 +33,7 @@ export default function MonthlyReport({ onClose }) {
     drawReport({
       t,
       lang: data.lang,
+        font: data.urduFont,
       seller: data.auth,
       monthName,
       rows,

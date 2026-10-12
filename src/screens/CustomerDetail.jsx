@@ -58,6 +58,7 @@ export default function CustomerDetail({ id, onBack }) {
       await drawBill({
         t,
         lang: data.lang,
+        font: data.urduFont,
         seller: data.auth,
         customer: c,
         monthName,

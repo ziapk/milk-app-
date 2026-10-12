@@ -33,7 +33,8 @@ export default function App() {
   useEffect(() => {
     document.documentElement.lang = data.lang;
     document.documentElement.dir = data.lang === 'ur' ? 'rtl' : 'ltr';
-  }, [data.lang]);
+    document.documentElement.dataset.font = data.urduFont;
+  }, [data.lang, data.urduFont]);
 
   const go = (k) => {
     setOpenCustomer(null);

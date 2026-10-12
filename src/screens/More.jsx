@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import Icon from '../Icon';
+import { URDU_FONTS } from '../fonts';
 import { canOpenVoiceSettings, openVoiceSettings, voiceLanguage } from '../search';
 
 export default function More() {
-  const { data, setLang, logout, logoutOthers, deleteAccount, sync, syncState } = useStore();
+  const { data, setLang, setUrduFont, logout, logoutOthers, deleteAccount, sync, syncState } = useStore();
   const t = useT();
   const pending = data.queue.length;
   const [note, setNote] = useState('');
@@ -61,6 +62,17 @@ export default function More() {
         <div className="two">
           <button className={`btn ${data.lang === 'ur' ? 'blue solid' : ''}`} onClick={() => setLang('ur')}>اردو</button>
           <button className={`btn ${data.lang === 'en' ? 'blue solid' : ''}`} onClick={() => setLang('en')}>English</button>
+        </div>
+      </div>
+      <div className="card form">
+        <div className="name"><Icon name="font" /> {t.urduFont}</div>
+        <div className="fontpick">
+          {Object.entries(URDU_FONTS).map(([k, family]) => (
+            <button key={k} className={data.urduFont === k ? 'on' : ''} onClick={() => setUrduFont(k)}>
+              <span lang="ur" style={{ fontFamily: `"${family}"` }}>دودھ حساب</span>
+              <small>{t.fontNames[k]}</small>
+            </button>
+          ))}
         </div>
       </div>
       {canOpenVoiceSettings() && (

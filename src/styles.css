@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap');
-
 :root {
   --bg: #f4f7fb;
   --card: #fff;
@@ -14,7 +12,10 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; background: var(--bg); color: var(--text); }
 body { font: 18px/1.4 system-ui, sans-serif; }
+/* Urdu font is picked in Settings (data-font on <html>). Nastaliq needs more line height than Naskh. */
 html[lang='ur'] body { font-family: 'Noto Nastaliq Urdu', system-ui, sans-serif; line-height: 1.9; }
+html[lang='ur'][data-font='gulzar'] body { font-family: 'Gulzar', system-ui, sans-serif; line-height: 1.85; }
+html[lang='ur'][data-font='naskh'] body { font-family: 'Noto Naskh Arabic', system-ui, sans-serif; line-height: 1.6; }
 button, input, a.btn { font: inherit; color: inherit; }
 
 .app { max-width: 560px; margin: 0 auto; min-height: 100vh; padding-bottom: 96px; }
@@ -239,3 +240,16 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
 .voiceerr { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 4px 0 8px; }
 .preview-head { margin: 0; padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); background: var(--card); }
 .preview-head + .preview-img { padding-top: 16px; }
+
+/* Urdu font picker */
+.fontpick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fontpick button {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 12px;
+  border: 2px solid var(--line); background: #fff; direction: rtl;
+}
+.fontpick span { font-size: 18px; line-height: 2.1; white-space: nowrap; }
+.fontpick small { font-size: 12px; color: var(--muted); font-family: system-ui, sans-serif; }
+.fontpick .on { border-color: var(--blue); background: #eaf2fd; }
+.fontpick .on small { color: var(--blue); font-weight: 700; }
+
+.datebar > div { display: flex; flex-direction: column; gap: 4px; }

@@ -10,7 +10,7 @@ const KEY = 'doodh-app-v1';
 // expenses:   [{ id, date, category, amount, note }]
 // queue:      changes not yet sent to the server, one per row: [{ t: 'c' | 'd' | 'p' | 'e', row }]
 // cursor:     server time of the last successful sync
-const empty = { customers: [], deliveries: {}, payments: [], expenses: [], lang: 'ur', auth: null, queue: [], cursor: null };
+const empty = { customers: [], deliveries: {}, payments: [], expenses: [], lang: 'ur', urduFont: 'nastaliq', auth: null, queue: [], cursor: null };
 
 function load() {
   try {
@@ -100,7 +100,7 @@ export function StoreProvider({ children }) {
     localStorage.setItem(KEY, JSON.stringify(data));
   }, [data]);
 
-  const logoutLocal = useCallback(() => setData((d) => ({ ...empty, lang: d.lang })), []);
+  const logoutLocal = useCallback(() => setData((d) => ({ ...empty, lang: d.lang, urduFont: d.urduFont })), []);
 
   const sync = useCallback(async () => {
     const d = dataRef.current;
@@ -176,6 +176,7 @@ export function StoreProvider({ children }) {
       balance: (cid) => billed(cid).amount - paid(cid),
 
       setLang: (lang) => setData((d) => ({ ...d, lang })),
+      setUrduFont: (urduFont) => setData((d) => ({ ...d, urduFont })),
 
       // Called after a successful login/register. Anything entered before logging in gets uploaded.
       setAuth: (auth) => setData((d) => ({ ...d, auth, cursor: null, queue: queueEverything(d) })),

@@ -32,7 +32,8 @@ export default function Expenses() {
       note: e.note,
       amount: e.amount,
     }));
-    setPreview(await drawExpenses({ t, lang: data.lang, seller: data.auth, monthName, rows, total: spentMonth }));
+    setPreview(await drawExpenses({ t, lang: data.lang,
+        font: data.urduFont, seller: data.auth, monthName, rows, total: spentMonth }));
   };
 
   if (preview)

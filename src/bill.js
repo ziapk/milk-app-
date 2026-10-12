@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { money } from './i18n';
+import { fontStack, loadFont } from './fonts';
 
 const W = 1080;
 const PAD = 64;
@@ -10,10 +11,10 @@ const ROW = 56;
 // Draws a shareable sheet: coloured header, a table, then totals. Mirrors the layout for Urdu.
 // columns: [{ label, x, align?, width? }] with x measured from the reading start.
 // rows:    [{ cells: [..], color? }]   totals: [{ label, value, color?, big? }]
-async function drawSheet({ t, lang, seller, title, subtitle, columns, rows, totals }) {
+async function drawSheet({ t, lang, font, seller, title, subtitle, columns, rows, totals }) {
   const rtl = lang === 'ur';
-  const family = rtl ? '"Noto Nastaliq Urdu", "Noto Naskh Arabic", sans-serif' : 'system-ui, -apple-system, Roboto, sans-serif';
-  await document.fonts?.ready;
+  const family = rtl ? fontStack(font) : 'system-ui, -apple-system, Roboto, sans-serif';
+  if (rtl) await loadFont(font);
 
   const headH = 330;
   const tableH = ROW * (rows.length + 1) + 24;
@@ -79,10 +80,10 @@ async function drawSheet({ t, lang, seller, title, subtitle, columns, rows, tota
 }
 
 // rows: [{ label, qty, rate }] — one per day the customer was marked.
-export function drawBill({ t, lang, seller, customer, monthName, rows, totals }) {
+export function drawBill({ t, lang, font, seller, customer, monthName, rows, totals }) {
   const skip = '#d93b3b';
   return drawSheet({
-    t, lang, seller,
+    t, lang, font, seller,
     title: customer.name,
     subtitle: `${t.bill} · ${monthName}`,
     columns: [
@@ -111,9 +112,9 @@ export function drawBill({ t, lang, seller, customer, monthName, rows, totals })
 }
 
 // rows: [{ label, category, note, amount }]
-export function drawExpenses({ t, lang, seller, monthName, rows, total }) {
+export function drawExpenses({ t, lang, font, seller, monthName, rows, total }) {
   return drawSheet({
-    t, lang, seller,
+    t, lang, font, seller,
     title: t.expenses,
     subtitle: monthName,
     columns: [
@@ -128,11 +129,11 @@ export function drawExpenses({ t, lang, seller, monthName, rows, total }) {
 }
 
 // rows: [{ name, liters, amount, paid, due }] — one per customer active that month.
-export function drawReport({ t, lang, seller, monthName, rows, totals }) {
+export function drawReport({ t, lang, font, seller, monthName, rows, totals }) {
   const red = '#d93b3b';
   const green = '#1a9e55';
   return drawSheet({
-    t, lang, seller,
+    t, lang, font, seller,
     title: t.monthlyReport,
     subtitle: `${monthName} · ${rows.length} ${t.customers}`,
     columns: [
