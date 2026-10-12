@@ -150,3 +150,52 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
 .daycard .iconbtns { margin-inline-start: auto; }
 .span-full { margin: 8px 0; }
 .span-full b { font-size: 32px; }
+
+/* Top bar + menu */
+.topbar {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; padding-top: calc(8px + env(safe-area-inset-top)); background: var(--card); border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; color: var(--blue); }
+.brand .bikeicon { width: 30px; height: 24px; }
+.menubtn { position: relative; width: 44px; height: 44px; border: 0; border-radius: 12px; background: #f1f4f8; font-size: 20px; }
+.menubtn .dot { top: 6px; right: 6px; }
+.menuveil { position: fixed; inset: 0; z-index: 1; }
+.menu {
+  position: absolute; top: calc(100% + 6px); inset-inline-end: 12px; z-index: 2; min-width: 200px; background: var(--card);
+  border-radius: 14px; box-shadow: 0 8px 24px #0002; padding: 6px; display: flex; flex-direction: column;
+}
+.menu button {
+  position: relative; display: flex; align-items: center; gap: 12px; border: 0; background: none; text-align: start;
+  padding: 12px 14px; border-radius: 10px; font-size: 17px;
+}
+.menu button .fa-solid { width: 22px; color: var(--muted); }
+.menu button.on { background: #eaf2fd; color: var(--blue); font-weight: 700; }
+.menu button.on .fa-solid { color: var(--blue); }
+.menu button .dot { position: static; margin-inline-start: auto; }
+
+/* Delivery screen */
+.progress { background: var(--card); border-radius: 14px; padding: 10px 14px; margin: 8px 0 12px; box-shadow: 0 1px 3px #0001; }
+.progress-text { display: flex; justify-content: space-between; font-size: 15px; color: var(--muted); }
+.progress-text b { color: var(--text); font-size: 18px; }
+.progress .bar { height: 6px; border-radius: 3px; background: #eef2f7; margin-top: 8px; overflow: hidden; direction: ltr; }
+[dir='rtl'] .progress .bar { direction: rtl; }
+.progress .bar i { display: block; height: 100%; background: var(--green); border-radius: 3px; transition: width 0.2s; }
+
+.daycard {
+  display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: 14px; padding: 10px 12px;
+  margin: 8px 0; box-shadow: 0 1px 2px #0001; border-inline-start: 4px solid transparent; flex-wrap: nowrap;
+}
+.daycard.done { border-inline-start-color: var(--green); }
+.daycard.skipped { border-inline-start-color: var(--red); }
+.daycard.skipped .dayname, .daycard.skipped .stepper { opacity: 0.5; }
+.dayname { font-size: 18px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stepper { display: inline-flex; align-items: center; background: #f1f4f8; border-radius: 999px; margin-top: 4px; }
+.stepper button { width: 36px; height: 36px; border: 0; background: none; border-radius: 50%; font-size: 14px; color: var(--muted); }
+.stepper button:active { background: #e2e8f0; }
+.stepper .num { min-width: 52px; text-align: center; font-weight: 800; font-size: 18px; direction: ltr; }
+.stepper .num small { font-size: 12px; font-weight: 600; color: var(--muted); }
+.mark { flex: none; width: 46px; height: 46px; border-radius: 50%; border: 0; background: #f1f4f8; color: var(--muted); font-size: 20px; }
+.mark:active { transform: scale(0.94); }
+.mark.skip.on { background: var(--red); color: #fff; }
+.mark.give.on { background: var(--green); color: #fff; }

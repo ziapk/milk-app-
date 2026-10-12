@@ -13,7 +13,7 @@ export default function More() {
 
   return (
     <>
-      <h1><Icon name="gear" /> {t.more}</h1>
+      <h1><Icon name="gear" /> {t.settings}</h1>
       <div className="card form">
         <div className="name"><Icon name="circle-user" /> {data.auth.name}</div>
         <div className="muted" dir="ltr">{data.auth.phone}</div>

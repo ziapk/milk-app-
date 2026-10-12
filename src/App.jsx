@@ -11,13 +11,16 @@ import Stats from './screens/Stats';
 import Expenses from './screens/Expenses';
 import Icon, { BikeIcon } from './Icon';
 
+// Daily-use screens sit in the bottom bar; the rest live in the top-right menu.
 const TABS = [
-  ['today', null],
-  ['customers', 'users'],
-  ['payments', 'money-bill-wave'],
-  ['expenses', 'receipt'],
+  ['today', 'delivery', null],
+  ['customers', 'customers', 'users'],
+  ['expenses', 'expenses', 'receipt'],
+];
+const MENU = [
   ['stats', 'chart-pie'],
-  ['more', 'gear'],
+  ['payments', 'money-bill-wave'],
+  ['more', 'gear', 'settings'],
 ];
 
 export default function App() {
@@ -25,6 +28,7 @@ export default function App() {
   const t = useT();
   const [tab, setTab] = useState('today');
   const [openCustomer, setOpenCustomer] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang = data.lang;
@@ -33,8 +37,10 @@ export default function App() {
 
   const go = (k) => {
     setOpenCustomer(null);
+    setMenuOpen(false);
     setTab(k);
   };
+  const pending = data.queue.length > 0;
 
   if (!data.auth) return <Login />;
 
@@ -49,15 +55,32 @@ export default function App() {
 
   return (
     <div className="app">
+      <header className="topbar">
+        <div className="brand"><BikeIcon /> {t.appName}</div>
+        <button className="menubtn" aria-label={t.menu} onClick={() => setMenuOpen((o) => !o)}>
+          <Icon name={menuOpen ? 'xmark' : 'bars'} />
+          {pending && <i className="dot" />}
+        </button>
+        {menuOpen && (
+          <>
+            <div className="menuveil" onClick={() => setMenuOpen(false)} />
+            <div className="menu">
+              {MENU.map(([k, icon, label]) => (
+                <button key={k} className={tab === k && !openCustomer ? 'on' : ''} onClick={() => go(k)}>
+                  <Icon name={icon} /> {t[label || k]}
+                  {k === 'more' && pending && <i className="dot" />}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </header>
       <main>{screen}</main>
       <nav className="tabs">
-        {TABS.map(([k, icon]) => (
+        {TABS.map(([k, label, icon]) => (
           <button key={k} className={tab === k && !openCustomer ? 'on' : ''} onClick={() => go(k)}>
-            <span className="ico">
-              {icon ? <Icon name={icon} /> : <BikeIcon />}
-              {k === 'more' && data.queue.length > 0 && <i className="dot" />}
-            </span>
-            {t[k]}
+            <span className="ico">{icon ? <Icon name={icon} /> : <BikeIcon />}</span>
+            {t[label]}
           </button>
         ))}
       </nav>

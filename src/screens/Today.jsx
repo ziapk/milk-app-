@@ -42,15 +42,17 @@ export default function Today() {
         </button>
       </header>
 
-      <div className="stats">
-        <div className="stat blue">
-          <Icon name="bottle-droplet" /> <b>{totalLiters}</b> {t.liters}
+      <div className="progress">
+        <div className="progress-text">
+          <span>
+            <Icon name="check-double" /> <b>{marked}</b>/{list.length}
+          </span>
+          <span>
+            <Icon name="bottle-droplet" /> <b>{totalLiters}</b> {t.liters}
+          </span>
         </div>
-        <div className="stat">
-          <Icon name="check-double" />{" "}
-          <b>
-            {marked}/{list.length}
-          </b>
+        <div className="bar">
+          <i style={{ width: `${list.length ? (marked / list.length) * 100 : 0}%` }} />
         </div>
       </div>
 
@@ -61,52 +63,40 @@ export default function Today() {
         const qty = entry ? entry.qty : c.defaultQty;
         const state = !entry ? "pending" : entry.qty > 0 ? "done" : "skipped";
         return (
-          <div key={c.id} className={`card row daycard ${state}`}>
+          <div key={c.id} className={`daycard ${state}`}>
             <div className="grow">
-              <div className="name">{c.name}</div>
-              <div className="qty">
+              <div className="dayname">{c.name}</div>
+              <div className="stepper">
                 <button
-                  className="round"
-                  onClick={() =>
-                    setDelivery(date, c.id, Math.max(0, qty - STEP))
-                  }
+                  aria-label="-"
+                  onClick={() => setDelivery(date, c.id, Math.max(0, qty - STEP))}
                 >
                   <Icon name="minus" />
                 </button>
-                <span className="num">{qty}</span>
-                <button
-                  className="round"
-                  onClick={() => setDelivery(date, c.id, qty + STEP)}
-                >
+                <span className="num">
+                  {qty} <small>{t.liters}</small>
+                </span>
+                <button aria-label="+" onClick={() => setDelivery(date, c.id, qty + STEP)}>
                   <Icon name="plus" />
                 </button>
-                <span className="muted">{t.liters}</span>
               </div>
             </div>
-            <div className="actions iconbtns">
-              <button
-                className={`btn red ${state === "skipped" ? "solid" : ""}`}
-                aria-label={t.skip}
-                onClick={() =>
-                  setDelivery(date, c.id, state === "skipped" ? null : 0)
-                }
-              >
-                <Icon name="xmark" />
-              </button>
-              <button
-                className={`btn green ${state === "done" ? "solid" : ""}`}
-                aria-label={t.done}
-                onClick={() =>
-                  setDelivery(
-                    date,
-                    c.id,
-                    state === "done" ? null : qty || c.defaultQty,
-                  )
-                }
-              >
-                <Icon name="check" />
-              </button>
-            </div>
+            <button
+              className={`mark skip ${state === "skipped" ? "on" : ""}`}
+              aria-label={t.skip}
+              onClick={() => setDelivery(date, c.id, state === "skipped" ? null : 0)}
+            >
+              <Icon name="xmark" />
+            </button>
+            <button
+              className={`mark give ${state === "done" ? "on" : ""}`}
+              aria-label={t.done}
+              onClick={() =>
+                setDelivery(date, c.id, state === "done" ? null : qty || c.defaultQty)
+              }
+            >
+              <Icon name="check" />
+            </button>
           </div>
         );
       })}
