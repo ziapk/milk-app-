@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore, today } from '../store';
-import { useT } from '../i18n';
+import { useT, money } from '../i18n';
 import AmountInput from './AmountInput';
 import Icon from '../Icon';
 
@@ -14,12 +14,16 @@ export const CATEGORIES = [
 
 // New expense, or edit an existing `expense`.
 export default function ExpenseBox({ expense, onDone }) {
-  const { addExpense, updateExpense } = useStore();
+  const { data, addExpense, updateExpense } = useStore();
   const t = useT();
   const [category, setCategory] = useState(expense?.category || 'feed');
   const [amount, setAmount] = useState(expense ? String(expense.amount) : '');
   const [note, setNote] = useState(expense?.note || '');
   const [date, setDate] = useState(expense?.date || today());
+
+  // Recent amounts for this category first (most likely to repeat), then round figures.
+  const recent = data.expenses.filter((e) => e.category === category).map((e) => e.amount);
+  const suggestions = [...new Set([...recent.slice(0, 3), 500, 1000, 2000, 5000])].slice(0, 6);
 
   const save = () => {
     const n = Number(amount);
@@ -41,6 +45,11 @@ export default function ExpenseBox({ expense, onDone }) {
       </div>
       <label><Icon name="money-bill-wave" /> {t.amount}</label>
       <AmountInput value={amount} onChange={setAmount} />
+      <div className="chips">
+        {suggestions.map((n) => (
+          <button key={n} className={`btn ${Number(amount) === n ? 'red' : ''}`} onClick={() => setAmount(String(n))}>{money(n)}</button>
+        ))}
+      </div>
       <label><span><Icon name="note-sticky" /> {t.note}</span><input value={note} onChange={(e) => setNote(e.target.value)} /></label>
       {expense && (
         <label><span><Icon name="calendar-days" /> {t.date}</span>

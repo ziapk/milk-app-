@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { SpeechRecognition } from '@capacitor-community/speech-recognition';
 
 const norm = (s) =>
@@ -36,6 +36,12 @@ export function matches(name, query) {
 }
 
 export const filterCustomers = (list, query) => list.filter((c) => matches(c.name, query));
+
+// Native helper (android/.../VoiceSettingsPlugin.java) that opens the phone's voice settings,
+// where offline speech languages are downloaded.
+const VoiceSettings = registerPlugin('VoiceSettings');
+export const canOpenVoiceSettings = () => Capacitor.getPlatform() === 'android';
+export const openVoiceSettings = () => VoiceSettings.open();
 
 const webRecognizer = () => window.SpeechRecognition || window.webkitSpeechRecognition;
 

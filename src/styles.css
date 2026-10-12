@@ -215,3 +215,25 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
 .card.danger { margin-top: 24px; }
 .footer { display: flex; justify-content: center; gap: 16px; margin: 16px 0; }
 .footer a { color: var(--blue); }
+
+/* Delivery: add customer + on-the-spot payment */
+.searchrow { display: flex; align-items: center; gap: 8px; }
+.addbtn { flex: none; width: 52px; height: 52px; border: 0; border-radius: 14px; background: var(--blue); color: #fff; font-size: 20px; box-shadow: 0 1px 3px #0001; }
+.paypill {
+  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; margin-inline-start: 8px; vertical-align: top;
+  border: 0; border-radius: 999px; background: #e3f6ec; color: var(--green); font-size: 15px; font-weight: 700; margin-top: 4px;
+}
+.paypill.due { background: #fde8e8; color: var(--red); }
+.paypill span { direction: ltr; }
+
+/* Image preview */
+.preview { position: fixed; inset: 0; z-index: 50; background: #0f1720; display: flex; flex-direction: column; }
+.preview-img { flex: 1; overflow: auto; padding: 16px; padding-top: calc(16px + env(safe-area-inset-top)); }
+.preview-img img { display: block; width: 100%; max-width: 560px; margin: 0 auto; border-radius: 8px; }
+.preview-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--card); }
+.preview-bar .btn { flex: 1; min-width: 0; }
+
+.listhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.linkbtn.blue { color: var(--blue); text-decoration: none; }
+.preview-bar .btn:first-child { flex-basis: 100%; }
+.voiceerr { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 4px 0 8px; }

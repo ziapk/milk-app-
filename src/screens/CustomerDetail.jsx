@@ -5,7 +5,8 @@ import { Balance } from './Customers';
 import CustomerForm from './CustomerForm';
 import PayBox from './PayBox';
 import Icon from '../Icon';
-import { drawBill, shareBill } from '../bill';
+import { drawBill } from '../bill';
+import ImagePreview from './ImagePreview';
 
 const shiftMonth = (ym, n) => {
   const [y, m] = ym.split('-').map(Number);
@@ -26,7 +27,7 @@ export default function CustomerDetail({ id, onBack }) {
   const c = store.customerById(id);
   const [month, setMonth] = useState(today().slice(0, 7));
   const [mode, setMode] = useState(null); // 'edit' | 'pay'
-  const [sharing, setSharing] = useState(false);
+  const [preview, setPreview] = useState(null); // canvas of the bill being previewed
 
   if (!c) return null;
 
@@ -48,14 +49,13 @@ export default function CustomerDetail({ id, onBack }) {
     window.open(`https://wa.me/${waNumber(c.phone)}?text=${encodeURIComponent(text)}`);
   };
 
-  const shareImage = async () => {
-    setSharing(true);
-    try {
-      const rows = days.map((d) => ({
-        label: new Date(d + 'T00:00:00').toLocaleDateString(data.lang === 'ur' ? 'ur-PK' : 'en-PK', { day: 'numeric', month: 'short' }),
-        ...data.deliveries[d][id],
-      }));
-      const canvas = await drawBill({
+  const showBill = async () => {
+    const rows = days.map((d) => ({
+      label: new Date(d + 'T00:00:00').toLocaleDateString(data.lang === 'ur' ? 'ur-PK' : 'en-PK', { day: 'numeric', month: 'short' }),
+      ...data.deliveries[d][id],
+    }));
+    setPreview(
+      await drawBill({
         t,
         lang: data.lang,
         seller: data.auth,
@@ -63,16 +63,18 @@ export default function CustomerDetail({ id, onBack }) {
         monthName,
         rows,
         totals: { liters: m.liters, amount: m.amount, paid: mPaid, due: bal },
-      });
-      await shareBill(canvas, `bill-${month}-${c.id}.png`, `${c.name} · ${monthName}`);
-    } catch {
-      // Closing the share sheet without picking an app also lands here.
-    } finally {
-      setSharing(false);
-    }
+      }),
+    );
   };
 
   if (mode === 'edit') return <CustomerForm customer={c} onDone={() => setMode(null)} />;
+
+  if (preview)
+    return (
+      <ImagePreview canvas={preview} fileName={`bill-${month}-${c.id}.png`} title={`${c.name} · ${monthName}`} onClose={() => setPreview(null)}>
+        {c.phone && <button className="btn wa" onClick={sendBill}><Icon name="whatsapp" brand /> {t.sendText}</button>}
+      </ImagePreview>
+    );
 
   return (
     <>
@@ -85,16 +87,8 @@ export default function CustomerDetail({ id, onBack }) {
       <div className="card center">
         <Balance amount={bal} />
         {c.address && <div className="muted"><Icon name="house" /> {c.address}</div>}
+        {c.phone && <a className="linkbtn blue" href={`tel:${c.phone}`} dir="ltr"><Icon name="phone" /> {c.phone}</a>}
       </div>
-
-      {mode === 'pay' ? (
-        <PayBox customerId={id} onDone={() => setMode(null)} />
-      ) : (
-        <div className="two">
-          <button className="btn green solid" onClick={() => setMode('pay')}><Icon name="hand-holding-dollar" /> {t.receive}</button>
-          {c.phone && <a className="btn blue" href={`tel:${c.phone}`}><Icon name="phone" /> {t.call}</a>}
-        </div>
-      )}
 
       <header className="datebar">
         <button className="arrow" onClick={() => setMonth(shiftMonth(month, -1))}><Icon name="chevron-left" flip /></button>
@@ -108,26 +102,28 @@ export default function CustomerDetail({ id, onBack }) {
         <div className="stat green"><small><Icon name="hand-holding-dollar" /></small><b>{money(mPaid)}</b></div>
       </div>
 
-      <div className="two">
-        <button className="btn blue" onClick={shareImage} disabled={sharing || days.length === 0}>
-          <Icon name={sharing ? 'spinner' : 'image'} spin={sharing} /> {t.shareBill}
-        </button>
-        {c.phone && <button className="btn wa" onClick={sendBill}><Icon name="whatsapp" brand /> {t.sendText}</button>}
-      </div>
-
-      <div className="card">
-        <div className="days">
-          {days.map((d) => {
-            const q = data.deliveries[d][id].qty;
-            return (
-              <div key={d} className={`day ${q > 0 ? 'done' : 'skipped'}`}>
-                <small>{Number(d.slice(8))}</small>
-                <b>{q > 0 ? q : <Icon name="xmark" />}</b>
-              </div>
-            );
-          })}
+      {days.length > 0 && (
+        <div className="card">
+          <div className="days">
+            {days.map((d) => {
+              const q = data.deliveries[d][id].qty;
+              return (
+                <div key={d} className={`day ${q > 0 ? 'done' : 'skipped'}`}>
+                  <small>{Number(d.slice(8))}</small>
+                  <b>{q > 0 ? q : <Icon name="xmark" />}</b>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
+      {mode === 'pay' ? (
+        <PayBox customerId={id} onDone={() => setMode(null)} />
+      ) : (
+        <button className="btn green solid wide" onClick={() => setMode('pay')}><Icon name="hand-holding-dollar" /> {t.receive}</button>
+      )}
+      <button className="btn blue wide" onClick={showBill} disabled={days.length === 0}><Icon name="image" /> {t.shareBill}</button>
     </>
   );
 }

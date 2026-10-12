@@ -7,15 +7,17 @@ const W = 1080;
 const PAD = 64;
 const ROW = 56;
 
-// Draws a customer's monthly bill as a PNG-ready canvas. Mirrors the layout for Urdu.
-export async function drawBill({ t, lang, seller, customer, monthName, rows, totals }) {
+// Draws a shareable sheet: coloured header, a table, then totals. Mirrors the layout for Urdu.
+// columns: [{ label, x, align?, width? }] with x measured from the reading start.
+// rows:    [{ cells: [..], color? }]   totals: [{ label, value, color?, big? }]
+async function drawSheet({ t, lang, seller, title, subtitle, columns, rows, totals }) {
   const rtl = lang === 'ur';
   const family = rtl ? '"Noto Nastaliq Urdu", "Noto Naskh Arabic", sans-serif' : 'system-ui, -apple-system, Roboto, sans-serif';
   await document.fonts?.ready;
 
   const headH = 330;
   const tableH = ROW * (rows.length + 1) + 24;
-  const footH = 4 * 64 + 140;
+  const footH = totals.length * 64 + 140;
   const H = headH + tableH + footH;
 
   const canvas = document.createElement('canvas');
@@ -25,12 +27,17 @@ export async function drawBill({ t, lang, seller, customer, monthName, rows, tot
   ctx.direction = rtl ? 'rtl' : 'ltr';
   ctx.textBaseline = 'middle';
 
-  // x is measured from the reading start (left in English, right in Urdu).
-  const text = (s, x, y, { size = 32, weight = 400, color = '#1b2430', align = 'start' } = {}) => {
+  const fit = (s, width) => {
+    s = String(s);
+    if (!width || ctx.measureText(s).width <= width) return s;
+    while (s.length > 1 && ctx.measureText(s + '…').width > width) s = s.slice(0, -1);
+    return s + '…';
+  };
+  const text = (s, x, y, { size = 32, weight = 400, color = '#1b2430', align = 'start', width } = {}) => {
     ctx.font = `${weight} ${size}px ${family}`;
     ctx.fillStyle = color;
     ctx.textAlign = align;
-    ctx.fillText(String(s), rtl ? W - x : x, y);
+    ctx.fillText(fit(s, width), rtl ? W - x : x, y);
   };
   const line = (y, color = '#e2e8f0') => {
     ctx.fillStyle = color;
@@ -43,53 +50,85 @@ export async function drawBill({ t, lang, seller, customer, monthName, rows, tot
   ctx.fillRect(0, 0, W, 150);
   text(t.appName, PAD, 60, { size: 48, weight: 800, color: '#fff' });
   text(`${seller.name}  ·  ${seller.phone}`, PAD, 112, { size: 28, color: '#dbe8fb' });
+  text(title, PAD, 215, { size: 44, weight: 800, width: W - PAD * 2 });
+  text(subtitle, PAD, 275, { size: 30, color: '#6b7686' });
 
-  text(customer.name, PAD, 215, { size: 44, weight: 800 });
-  text(`${t.bill} · ${monthName}`, PAD, 275, { size: 30, color: '#6b7686' });
-
-  // Columns: date, liters, rate, amount (amount aligned to the far edge).
-  const cols = [PAD, PAD + 300, PAD + 520, W - PAD];
   let y = headH + ROW / 2;
   ctx.fillStyle = '#f1f4f8';
   ctx.fillRect(PAD, headH, W - PAD * 2, ROW);
-  const head = { size: 26, weight: 700, color: '#6b7686' };
-  text(t.date, cols[0] + 16, y, head);
-  text(t.liters, cols[1], y, head);
-  text(t.rateShort, cols[2], y, head);
-  text(t.amount, cols[3] - 16, y, { ...head, align: 'end' });
+  for (const c of columns) text(c.label, c.x, y, { size: 26, weight: 700, color: '#6b7686', align: c.align, width: c.width });
 
   for (const r of rows) {
     y += ROW;
-    const skipped = r.qty === 0;
-    const c = skipped ? '#d93b3b' : '#1b2430';
-    text(r.label, cols[0] + 16, y, { size: 28, color: c });
-    text(skipped ? '—' : r.qty, cols[1], y, { size: 28, weight: 700, color: c });
-    text(skipped ? '' : money(r.rate), cols[2], y, { size: 28, color: '#6b7686' });
-    text(skipped ? '' : money(r.qty * r.rate), cols[3] - 16, y, { size: 28, weight: 700, align: 'end' });
+    r.cells.forEach((cell, i) => {
+      const c = columns[i];
+      text(cell, c.x, y, { size: 28, weight: c.bold ? 700 : 400, color: r.color || c.color || '#1b2430', align: c.align, width: c.width });
+    });
     line(y + ROW / 2 - 1);
   }
 
   y = headH + tableH + 40;
-  const sum = (label, value, opts = {}) => {
-    text(label, PAD, y, { size: 32, color: '#6b7686' });
-    text(value, W - PAD, y, { size: 34, weight: 800, align: 'end', ...opts });
+  totals.forEach((s, i) => {
+    if (s.big && i > 0) line(y - 34, '#1b2430');
+    text(s.label, PAD, y, { size: 32, color: '#6b7686' });
+    text(s.value, W - PAD, y, { size: s.big ? 44 : 34, weight: 800, align: 'end', color: s.color || '#1b2430' });
     y += 64;
-  };
-  sum(t.totalMilk, `${totals.liters} ${t.liters}`);
-  sum(t.bill, `${t.rs} ${money(totals.amount)}`);
-  sum(t.paidMonth, `${t.rs} ${money(totals.paid)}`, { color: '#1a9e55' });
-  line(y - 34, '#1b2430');
-  sum(totals.due >= 0 ? t.totalDue : t.advance, `${t.rs} ${money(Math.abs(totals.due))}`, {
-    size: 44,
-    color: totals.due > 0 ? '#d93b3b' : '#1a9e55',
   });
   text(t.thanks, W / 2, H - 50, { size: 28, color: '#6b7686', align: 'center' });
-
   return canvas;
 }
 
-// Opens the phone's share sheet (WhatsApp, etc.) with the bill image; on desktop it downloads.
-export async function shareBill(canvas, fileName, title) {
+// rows: [{ label, qty, rate }] — one per day the customer was marked.
+export function drawBill({ t, lang, seller, customer, monthName, rows, totals }) {
+  const skip = '#d93b3b';
+  return drawSheet({
+    t, lang, seller,
+    title: customer.name,
+    subtitle: `${t.bill} · ${monthName}`,
+    columns: [
+      { label: t.date, x: PAD + 16 },
+      { label: t.liters, x: PAD + 300, bold: true },
+      { label: t.rateShort, x: PAD + 520, color: '#6b7686' },
+      { label: t.amount, x: W - PAD - 16, align: 'end', bold: true },
+    ],
+    rows: rows.map((r) =>
+      r.qty === 0
+        ? { cells: [r.label, '—', '', ''], color: skip }
+        : { cells: [r.label, r.qty, money(r.rate), money(r.qty * r.rate)] },
+    ),
+    totals: [
+      { label: t.totalMilk, value: `${totals.liters} ${t.liters}` },
+      { label: t.bill, value: `${t.rs} ${money(totals.amount)}` },
+      { label: t.paidMonth, value: `${t.rs} ${money(totals.paid)}`, color: '#1a9e55' },
+      {
+        label: totals.due >= 0 ? t.totalDue : t.advance,
+        value: `${t.rs} ${money(Math.abs(totals.due))}`,
+        color: totals.due > 0 ? skip : '#1a9e55',
+        big: true,
+      },
+    ],
+  });
+}
+
+// rows: [{ label, category, note, amount }]
+export function drawExpenses({ t, lang, seller, monthName, rows, total }) {
+  return drawSheet({
+    t, lang, seller,
+    title: t.expenses,
+    subtitle: monthName,
+    columns: [
+      { label: t.date, x: PAD + 16 },
+      { label: t.category, x: PAD + 200, width: 220 },
+      { label: t.noteShort, x: PAD + 440, width: 280, color: '#6b7686' },
+      { label: t.amount, x: W - PAD - 16, align: 'end', bold: true },
+    ],
+    rows: rows.map((r) => ({ cells: [r.label, r.category, r.note, money(r.amount)] })),
+    totals: [{ label: t.spentMonth, value: `${t.rs} ${money(total)}`, color: '#d93b3b', big: true }],
+  });
+}
+
+// Opens the phone's share sheet (WhatsApp, etc.) with the image; on desktop it downloads.
+export async function shareImage(canvas, fileName, title) {
   const dataUrl = canvas.toDataURL('image/png');
   if (Capacitor.isNativePlatform()) {
     const { uri } = await Filesystem.writeFile({ path: fileName, data: dataUrl.split(',')[1], directory: Directory.Cache });

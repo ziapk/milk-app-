@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import Icon from '../Icon';
+import { canOpenVoiceSettings, openVoiceSettings, voiceLanguage } from '../search';
 
 export default function More() {
   const { data, setLang, logout, logoutOthers, deleteAccount, sync, syncState } = useStore();
@@ -62,6 +63,15 @@ export default function More() {
           <button className={`btn ${data.lang === 'en' ? 'blue solid' : ''}`} onClick={() => setLang('en')}>English</button>
         </div>
       </div>
+      {canOpenVoiceSettings() && (
+        <div className="card form">
+          <div className="name"><Icon name="microphone" /> {t.offlineVoice}</div>
+          <div className="muted">{t.offlineVoiceHelp(voiceLanguage(data.customers) === 'ur-PK' ? t.langUrdu : t.langEnIndia)}</div>
+          <button className="btn wide" onClick={() => openVoiceSettings().catch(() => {})}>
+            <Icon name="download" /> {t.offlineVoiceGet}
+          </button>
+        </div>
+      )}
       <div className="card form">
         <div className="name"><Icon name="shield-halved" /> {t.security}</div>
         <button className="btn wide" onClick={doLogoutOthers}><Icon name="mobile-screen" /> {t.logoutOthers}</button>

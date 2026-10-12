@@ -1,17 +1,21 @@
 import { useState } from "react";
 import { useStore, today, addDays } from "../store";
-import { useT } from "../i18n";
+import { useT, money } from "../i18n";
 import Icon from "../Icon";
 import SearchBar from "./SearchBar";
+import PayBox from "./PayBox";
+import CustomerForm from "./CustomerForm";
 import { filterCustomers } from "../search";
 
 const STEP = 0.5;
 
 export default function Today() {
-  const { data, setDelivery, markAll } = useStore();
+  const { data, setDelivery, markAll, balance } = useStore();
   const t = useT();
   const [date, setDate] = useState(today());
   const [query, setQuery] = useState("");
+  const [paying, setPaying] = useState(null); // customer id taking money on the spot
+  const [adding, setAdding] = useState(false);
   const day = data.deliveries[date] || {};
   const list = data.customers.filter((c) => c.active);
 
@@ -62,9 +66,22 @@ export default function Today() {
         </div>
       </div>
 
-      {list.length === 0 && <p className="empty">{t.noCustomers}</p>}
-
-      {list.length > 0 && <SearchBar value={query} onChange={setQuery} />}
+      {adding ? (
+        <CustomerForm onDone={() => setAdding(false)} />
+      ) : list.length === 0 ? (
+        <button className="btn blue solid wide" onClick={() => setAdding(true)}>
+          <Icon name="user-plus" /> {t.addCustomer}
+        </button>
+      ) : (
+        <div className="searchrow">
+          <div className="grow">
+            <SearchBar value={query} onChange={setQuery} />
+          </div>
+          <button className="addbtn" aria-label={t.addCustomer} onClick={() => setAdding(true)}>
+            <Icon name="user-plus" />
+          </button>
+        </div>
+      )}
 
       {unmarked > 0 && !query && (
         <button className="btn green wide" onClick={doMarkAll}>
@@ -78,6 +95,14 @@ export default function Today() {
         const entry = day[c.id];
         const qty = entry ? entry.qty : c.defaultQty;
         const state = !entry ? "pending" : entry.qty > 0 ? "done" : "skipped";
+        const due = Math.round(balance(c.id));
+        if (paying === c.id)
+          return (
+            <div key={c.id}>
+              <div className="name pad">{c.name}</div>
+              <PayBox customerId={c.id} onDone={() => setPaying(null)} />
+            </div>
+          );
         return (
           <div key={c.id} className={`daycard ${state}`}>
             <div className="grow">
@@ -96,6 +121,14 @@ export default function Today() {
                   <Icon name="plus" />
                 </button>
               </div>
+              <button
+                className={`paypill ${due > 0 ? "due" : ""}`}
+                aria-label={t.receive}
+                onClick={() => setPaying(c.id)}
+              >
+                <Icon name="rupee-sign" />
+                {due > 0 && <span>{money(due)}</span>}
+              </button>
             </div>
             <button
               className={`mark skip ${state === "skipped" ? "on" : ""}`}

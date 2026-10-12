@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../store';
 import { useT } from '../i18n';
-import { listen, matches, voiceLanguage, voiceSupported } from '../search';
+import { canOpenVoiceSettings, listen, matches, openVoiceSettings, voiceLanguage, voiceSupported } from '../search';
 import Icon from '../Icon';
 
 // Text search with a mic button. Voice returns several guesses; we keep the first that matches a customer.
@@ -40,7 +40,16 @@ export default function SearchBar({ value, onChange }) {
           </button>
         )}
       </div>
-      {error && <p className="muted center">{error}</p>}
+      {error && (
+        <div className="muted center voiceerr">
+          {error}
+          {canOpenVoiceSettings() && error === t.voiceFailed && (
+            <button className="linkbtn blue" onClick={() => openVoiceSettings().catch(() => {})}>
+              <Icon name="download" /> {t.offlineVoiceGet}
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }
