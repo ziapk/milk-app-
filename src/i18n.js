@@ -160,6 +160,7 @@ const dict = {
     creditSales: 'ادھار',
     deleteSaleConfirm: 'کیا یہ فروخت مٹا دیں؟',
     chooseBuyer: 'کس کو بیچا؟',
+    change: 'بدلیں',
     shopSale: 'دکان سے خریداری',
     unpaidPart: 'باقی کھاتے میں',
     // Supply module (milk bought from suppliers)
@@ -363,6 +364,7 @@ const dict = {
     creditSales: 'On credit',
     deleteSaleConfirm: 'Delete this sale?',
     chooseBuyer: 'Who is buying?',
+    change: 'Change',
     shopSale: 'Shop purchase',
     unpaidPart: 'on account',
     // Supply module (milk bought from suppliers)

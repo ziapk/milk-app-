@@ -411,3 +411,12 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 .form .cartline .grow { min-width: 0; }
 .form .cartline input.rate { width: 72px; flex: none; padding: 8px 4px; font-size: 16px; text-align: center; }
 .form select { width: 100%; padding: 12px; border: 2px solid var(--line); border-radius: 12px; font: inherit; font-size: 18px; background: #fff; color: inherit; }
+
+/* Sale: searchable buyer picker */
+.buyer { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 2px solid var(--primary); border-radius: 14px; background: var(--primary-soft); }
+.buyerpick { display: flex; flex-direction: column; gap: 6px; }
+.buyerpick .search { margin: 0; box-shadow: none; border: 2px solid var(--line); }
+.buyerrow { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; border: 2px solid var(--line); border-radius: 12px; background: #fff; font: inherit; color: inherit; text-align: start; }
+.buyerrow:active { border-color: var(--primary); }
+.form .buyerpick .search input { border: 0; padding: 10px 4px; background: none; width: auto; flex: 1; min-width: 0; font-size: 18px; }
+.form .buyerpick .search input:focus { border: 0; }

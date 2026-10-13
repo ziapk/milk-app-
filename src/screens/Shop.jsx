@@ -6,6 +6,9 @@ import { useBackClose } from '../back';
 import { useProducts } from '../products';
 import { usePeriod, PeriodBar } from './Period';
 import AmountInput from './AmountInput';
+import SearchBar from './SearchBar';
+import { Balance } from './Customers';
+import { filterCustomers } from '../search';
 
 // Litres and kilos sell in halves; bottles, eggs, packs in whole units.
 export const stepOf = (p) => (/^(l|litre|liter|لیٹر|kg|کلو)$/i.test(p?.unit || '') ? 0.5 : 1);
@@ -68,19 +71,24 @@ export default function Shop({ onNewSale }) {
 // New sale, or edit an existing `sale`. Walk-in sales are paid in full; customer sales can be
 // part paid, and the rest goes on the customer's account.
 export function SaleBox({ sale, onDone }) {
-  const { data, addSale, updateSale } = useStore();
+  const { data, addSale, updateSale, balance, customerById } = useStore();
   const { forSale, byId } = useProducts();
   const t = useT();
   useBackClose(onDone);
   const [lines, setLines] = useState(() => sale?.items.map((i) => ({ ...i, rate: String(i.rate) })) || []);
   const [customerId, setCustomerId] = useState(sale?.customerId || '');
+  const [onAccount, setOnAccount] = useState(!!sale?.customerId);
+  const [query, setQuery] = useState('');
   const [paid, setPaid] = useState(sale ? String(sale.paid) : '');
   const [date, setDate] = useState(sale?.date || today());
   const [note, setNote] = useState(sale?.note || '');
 
   const total = lines.reduce((s, l) => s + l.qty * (Number(l.rate) || 0), 0);
-  const paidNow = customerId ? Math.min(Number(paid) || 0, total) : total;
-  const customers = data.customers.filter((c) => c.active || c.id === customerId).sort((a, b) => a.name.localeCompare(b.name));
+  const paidNow = onAccount ? Math.min(Number(paid) || 0, total) : total;
+  const customers = data.customers.filter((c) => c.active).sort((a, b) => a.name.localeCompare(b.name));
+  // Search as you type; the first few matches are enough to tap.
+  const matches = filterCustomers(customers, query).slice(0, 8);
+  const buyer = customerId && customerById(customerId);
 
   const add = (p) =>
     setLines((ls) =>
@@ -91,9 +99,9 @@ export function SaleBox({ sale, onDone }) {
   const change = (n, patch) => setLines((ls) => ls.map((l, k) => (k === n ? { ...l, ...patch } : l)).filter((l) => l.qty > 0));
 
   const save = () => {
-    if (!lines.length) return;
+    if (!lines.length || (onAccount && !customerId)) return;
     const row = {
-      customerId: customerId || null,
+      customerId: onAccount ? customerId : null,
       items: lines.map((l) => ({ productId: l.productId, name: l.name, unit: l.unit, qty: l.qty, rate: Number(l.rate) || 0 })),
       paid: paidNow,
       note: note.trim(),
@@ -147,18 +155,32 @@ export function SaleBox({ sale, onDone }) {
         <div className="stat span-full"><small>{t.total}</small><b>{t.rs} {money(total)}</b></div>
 
         <div className="segments">
-          <button className={!customerId ? 'on' : ''} onClick={() => setCustomerId('')}><Icon name="store" /> {t.walkIn}</button>
-          <button className={customerId ? 'on' : ''} onClick={() => setCustomerId(customerId || customers[0]?.id || '')} disabled={!customers.length}>
+          <button className={!onAccount ? 'on' : ''} onClick={() => setOnAccount(false)}><Icon name="store" /> {t.walkIn}</button>
+          <button className={onAccount ? 'on' : ''} onClick={() => setOnAccount(true)} disabled={!customers.length}>
             <Icon name="book" /> {t.onAccount}
           </button>
         </div>
-        {customerId && (
+        {onAccount && (
           <>
-            <label><span><Icon name="user" /> {t.chooseBuyer}</span>
-              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </label>
+            <label><Icon name="user" /> {t.chooseBuyer}</label>
+            {buyer ? (
+              <div className="buyer">
+                <div className="grow name">{buyer.name}</div>
+                <Balance amount={balance(buyer.id)} />
+                <button className="btn compact" onClick={() => { setCustomerId(''); setQuery(''); }}>{t.change}</button>
+              </div>
+            ) : (
+              <div className="buyerpick">
+                <SearchBar value={query} onChange={setQuery} />
+                {matches.length === 0 && <p className="empty small">{t.noMatch}</p>}
+                {matches.map((c) => (
+                  <button key={c.id} className="buyerrow" onClick={() => setCustomerId(c.id)}>
+                    <span className="grow name">{c.name}</span>
+                    <Balance amount={balance(c.id)} />
+                  </button>
+                ))}
+              </div>
+            )}
             <label><Icon name="money-bill-wave" /> {t.paidNow}</label>
             <AmountInput value={paid} onChange={setPaid} />
             <div className="chips">
@@ -175,7 +197,7 @@ export function SaleBox({ sale, onDone }) {
         )}
         <label><span><Icon name="note-sticky" /> {t.note}</span><input value={note} onChange={(e) => setNote(e.target.value)} /></label>
         <div className="two">
-          <button className="btn primary solid" onClick={save} disabled={!lines.length}><Icon name="thumbs-up" /> {t.save}</button>
+          <button className="btn primary solid" onClick={save} disabled={!lines.length || (onAccount && !customerId)}><Icon name="thumbs-up" /> {t.save}</button>
           <button className="btn" onClick={onDone}>{t.cancel}</button>
         </div>
       </div>
