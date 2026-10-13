@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import Icon from '../Icon';
-import { useBackClose } from '../back';
+import { useBackClose, useSomethingOpen } from '../back';
 import { filterCustomers } from '../search';
 import CustomerForm from './CustomerForm';
 import SupplierForm from './SupplierForm';
@@ -31,6 +31,8 @@ export function Fab({ onPick }) {
   const t = useT();
   const { data } = useStore();
   const actions = ACTIONS.filter(([, , , , mode]) => !mode || data.settings[mode]);
+  // Hide while a form or sub-screen is open so it never covers fields (its own sheet counts too).
+  const busy = useSomethingOpen();
   const [open, setOpen] = useState(false);
   useBackClose(() => setOpen(false), open);
 
@@ -51,9 +53,9 @@ export function Fab({ onPick }) {
           </div>
         </div>
       )}
-      <button className={`fab ${open ? 'open' : ''}`} aria-label={t.newEntry} aria-expanded={open} onClick={() => setOpen(!open)}>
+      {(open || !busy) && <button className={`fab ${open ? 'open' : ''}`} aria-label={t.newEntry} aria-expanded={open} onClick={() => setOpen(!open)}>
         <Icon name="plus" />
-      </button>
+      </button>}
     </>
   );
 }

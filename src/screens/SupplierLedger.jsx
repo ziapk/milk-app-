@@ -8,6 +8,7 @@ import { SupplierBalance } from './Suppliers';
 import SupplierForm from './SupplierForm';
 import AmountInput from './AmountInput';
 import { useProducts } from '../products';
+import { stepOf } from './Shop';
 
 // One supplier's ledger for a month: opening balance, every purchase and payment with a running
 // balance, and the balance at the end. Positive balance = still owed to the supplier.
@@ -151,8 +152,8 @@ const num = (n) => Math.round(n * 100) / 100;
 // Ids are base-36 creation time + random suffix: a shorter id is older, same length compares as text.
 const byCreation = (a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0);
 
-// Stock bought from `supplier` (new), or edit an existing `purchase`. Any product can be bought;
-// the rate starts at what was last paid this supplier for it (the supplier's rate for the main product).
+// Stock bought from `supplier`: several products in one go (one ledger line each), or edit one
+// existing `purchase`. Each rate starts at what was last paid this supplier for that product.
 export function PurchaseBox({ supplier, purchase, onDone }) {
   const { data, addPurchase, updatePurchase } = useStore();
   const t = useT();
@@ -162,60 +163,92 @@ export function PurchaseBox({ supplier, purchase, onDone }) {
     const prev = data.purchases.find((b) => b.supplierId === supplier.id && (b.productId || MAIN) === pid);
     return prev ? prev.rate : pid === MAIN ? supplier.rate : byId(pid)?.price || '';
   };
-  const [productId, setProductId] = useState(purchase?.productId || MAIN);
-  const product = byId(productId) || forSale[0];
-  const [qty, setQty] = useState(purchase ? String(purchase.qty) : '');
-  const [rate, setRate] = useState(String(purchase ? purchase.rate : lastRate(MAIN)));
-  const pick = (pid) => {
-    setProductId(pid);
-    if (!purchase) setRate(String(lastRate(pid)));
-  };
+  const lineFor = (pid, qty = '') => ({ productId: pid, qty, rate: String(lastRate(pid)) });
+  // A new purchase opens with the main product ready to type, so a plain milk purchase stays quick.
+  const [lines, setLines] = useState(() =>
+    purchase
+      ? [{ productId: purchase.productId || MAIN, qty: String(purchase.qty), rate: String(purchase.rate) }]
+      : [lineFor(MAIN)],
+  );
   const [note, setNote] = useState(purchase?.note || '');
   const [date, setDate] = useState(purchase?.date || today());
-  const q = Number(qty) || 0;
-  const r = Number(rate) || 0;
-  const decimal = (set) => (e) => set(e.target.value.replace(/[^\d.]/g, ''));
+  const decimal = (v) => v.replace(/[^\d.]/g, '');
+  const change = (n, patch) => setLines((ls) => ls.map((l, k) => (k === n ? { ...l, ...patch } : l)));
+  const remove = (n) => setLines((ls) => ls.filter((_, k) => k !== n));
+  const add = (pid) =>
+    setLines((ls) =>
+      ls.some((l) => l.productId === pid)
+        ? ls.map((l) => (l.productId === pid ? { ...l, qty: String(num((Number(l.qty) || 0) + stepOf(byId(pid)))) } : l))
+        : [...ls, lineFor(pid, '1')],
+    );
+  const total = lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.rate) || 0), 0);
+  const filled = lines.filter((l) => Number(l.qty) > 0);
 
   const save = () => {
-    const row = { productId: productId === MAIN ? undefined : productId, qty: q, rate: r, note: note.trim(), date };
-    if (q > 0 && purchase) updatePurchase(purchase.id, row);
-    else if (q > 0) addPurchase(supplier.id, row);
+    const rows = filled.map((l) => ({
+      productId: l.productId === MAIN ? undefined : l.productId,
+      qty: Number(l.qty),
+      rate: Number(l.rate) || 0,
+      note: note.trim(),
+      date,
+    }));
+    if (purchase && rows[0]) updatePurchase(purchase.id, rows[0]);
+    else for (const row of rows) addPurchase(supplier.id, row);
     onDone();
   };
 
   return (
     <div className="card form">
-      {forSale.length > 1 && (
+      {!purchase && forSale.length > 1 && (
         <>
           <label><Icon name="boxes-stacked" /> {t.whatBought}</label>
-          <div className="chips prodchips">
-            {forSale.map((p) => (
-              <button key={p.id} className={`btn ${productId === p.id ? 'primary solid' : ''}`} onClick={() => pick(p.id)}>{p.name}</button>
-            ))}
+          <div className="prodgrid">
+            {forSale.map((p) => {
+              const line = lines.find((l) => l.productId === p.id);
+              return (
+                <button key={p.id} className={`prodtile ${line ? 'on' : ''}`} onClick={() => add(p.id)}>
+                  <b>{p.name}</b>
+                  <small>{p.unit}</small>
+                  {line && Number(line.qty) > 0 && <i className="count">{num(Number(line.qty))}</i>}
+                </button>
+              );
+            })}
           </div>
         </>
       )}
-      <label><Icon name="bottle-droplet" /> {product.name} ({product.unit})</label>
-      <div className="amount" dir="ltr">
-        <button type="button" className="round" onClick={() => setQty(String(Math.max(0, num(q - 1))))}><Icon name="minus" /></button>
-        <input className="huge" value={qty} onChange={decimal(setQty)} inputMode="decimal" autoFocus={!purchase} />
-        <button type="button" className="round" onClick={() => setQty(String(num(q + 1)))}><Icon name="plus" /></button>
-      </div>
-      <div className="chips">
-        {[5, 10, 20, 40].map((n) => (
-          <button key={n} className={`btn ${q === n ? 'primary' : ''}`} onClick={() => setQty(String(n))}>{n}</button>
-        ))}
-      </div>
-      <div className="two">
-        <label><span><Icon name="tag" /> {t.rateShort}</span><input value={rate} onChange={decimal(setRate)} inputMode="decimal" dir="ltr" /></label>
-        <label><span><Icon name="calendar-days" /> {t.date}</span>
-          <input type="date" value={date} max={today()} onChange={(e) => e.target.value && setDate(e.target.value)} />
-        </label>
-      </div>
-      <div className="stat span-full"><small>{t.total}</small><b>{t.rs} {money(q * r)}</b></div>
+
+      {lines.length === 0 && <p className="empty small">{t.tapToAdd}</p>}
+      {lines.map((l, n) => {
+        const p = byId(l.productId) || { name: '?', unit: '' };
+        const q = Number(l.qty) || 0;
+        return (
+          <div key={l.productId} className="buyline">
+            <div className="buyhead">
+              <b className="grow">{p.name} <small className="muted">({p.unit})</small></b>
+              <span className="muted" dir="ltr">{t.rs} {money(q * (Number(l.rate) || 0))}</span>
+              {!purchase && lines.length > 1 && (
+                <button type="button" className="x" aria-label={t.close} onClick={() => remove(n)}><Icon name="xmark" /></button>
+              )}
+            </div>
+            <div className="buyrow" dir="ltr">
+              <button type="button" className="round" aria-label="-" onClick={() => change(n, { qty: String(Math.max(0, num(q - stepOf(p)))) })}><Icon name="minus" /></button>
+              <input className="qtyin" value={l.qty} onChange={(e) => change(n, { qty: decimal(e.target.value) })} inputMode="decimal"
+                autoFocus={!purchase && n === 0} aria-label={`${p.name} (${p.unit})`} placeholder="0" />
+              <button type="button" className="round" aria-label="+" onClick={() => change(n, { qty: String(num(q + stepOf(p))) })}><Icon name="plus" /></button>
+              <span className="at">×</span>
+              <input className="ratein" value={l.rate} onChange={(e) => change(n, { rate: decimal(e.target.value) })} inputMode="decimal" aria-label={t.rateShort} />
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="stat span-full"><small>{t.total}</small><b>{t.rs} {money(total)}</b></div>
+      <label><span><Icon name="calendar-days" /> {t.date}</span>
+        <input type="date" value={date} max={today()} onChange={(e) => e.target.value && setDate(e.target.value)} />
+      </label>
       <label><span><Icon name="note-sticky" /> {t.note}</span><input value={note} onChange={(e) => setNote(e.target.value)} /></label>
       <div className="two">
-        <button className="btn primary solid" onClick={save}><Icon name="thumbs-up" /> {t.save}</button>
+        <button className="btn primary solid" onClick={save} disabled={!filled.length}><Icon name="thumbs-up" /> {t.save}</button>
         <button className="btn" onClick={onDone}>{t.cancel}</button>
       </div>
     </div>

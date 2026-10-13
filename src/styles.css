@@ -420,3 +420,12 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 .buyerrow:active { border-color: var(--primary); }
 .form .buyerpick .search input { border: 0; padding: 10px 4px; background: none; width: auto; flex: 1; min-width: 0; font-size: 18px; }
 .form .buyerpick .search input:focus { border: 0; }
+
+/* Supplier purchase: one line per product */
+.buyline { border: 2px solid var(--line); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.buyhead { display: flex; align-items: center; gap: 8px; font-size: 17px; }
+.buyrow { display: flex; align-items: center; gap: 8px; }
+.buyrow .round { width: 44px; height: 44px; flex: none; font-size: 20px; }
+.form .buyrow input.qtyin { flex: 1; min-width: 0; text-align: center; font-size: 24px; font-weight: 800; padding: 8px; }
+.form .buyrow input.ratein { width: 84px; flex: none; text-align: center; font-size: 18px; padding: 8px 4px; }
+.buyrow .at { color: var(--muted); font-weight: 700; }
