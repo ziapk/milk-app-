@@ -55,15 +55,15 @@ export default function More() {
             <><Icon name="circle-check" className="greentext" /> {t.synced}</>
           )}
         </div>
-        <button className="btn blue wide" onClick={sync} disabled={syncState === 'syncing'}>
+        <button className="btn primary wide" onClick={sync} disabled={syncState === 'syncing'}>
           <Icon name="rotate" spin={syncState === 'syncing'} /> {t.syncNow}
         </button>
       </div>
       <div className="card form">
         <div className="name"><Icon name="language" /> {t.language}</div>
         <div className="two">
-          <button className={`btn ${data.lang === 'ur' ? 'blue solid' : ''}`} onClick={() => setLang('ur')}>اردو</button>
-          <button className={`btn ${data.lang === 'en' ? 'blue solid' : ''}`} onClick={() => setLang('en')}>English</button>
+          <button className={`btn ${data.lang === 'ur' ? 'primary solid' : ''}`} onClick={() => setLang('ur')}>اردو</button>
+          <button className={`btn ${data.lang === 'en' ? 'primary solid' : ''}`} onClick={() => setLang('en')}>English</button>
         </div>
       </div>
       <div className="card form">

@@ -1,9 +1,13 @@
 :root {
-  --bg: #f4f7fb;
+  --bg: #f4f7f5;
   --card: #fff;
-  --text: #1b2430;
-  --muted: #6b7686;
-  --blue: #1e6fd9;
+  --text: #021627;
+  --muted: #687581;
+  /* MooPartner brand: green and navy from the logo */
+  --primary: #01822F;
+  --primary-dark: #016326;
+  --primary-soft: #e4f3e9;
+  --navy: #021627;
   --green: #1a9e55;
   --red: #d93b3b;
   --wa: #25d366;
@@ -33,7 +37,7 @@ h2 { font-size: 20px; margin: 24px 0 8px; color: var(--muted); }
   display: flex; flex-direction: column; align-items: center;
 }
 .tabs .ico { font-size: 26px; line-height: 1.2; }
-.tabs .on { color: var(--blue); font-weight: 700; }
+.tabs .on { color: var(--primary); font-weight: 700; }
 .tabs .on .ico { transform: scale(1.15); }
 
 .card { background: var(--card); border-radius: 16px; padding: 14px; margin: 10px 0; box-shadow: 0 1px 3px #0001; border: 2px solid transparent; }
@@ -65,10 +69,10 @@ h2 { font-size: 20px; margin: 24px 0 8px; color: var(--muted); }
 .btn.wide { width: 100%; margin: 6px 0; }
 .btn.green { border-color: var(--green); color: var(--green); }
 .btn.red { border-color: var(--red); color: var(--red); }
-.btn.blue { border-color: var(--blue); color: var(--blue); }
+.btn.primary { border-color: var(--primary); color: var(--primary); }
 .btn.solid.green { background: var(--green); color: #fff; }
 .btn.solid.red { background: var(--red); color: #fff; }
-.btn.solid.blue { background: var(--blue); color: #fff; }
+.btn.solid.primary { background: var(--primary); color: #fff; }
 .btn.wa { background: var(--wa); border-color: var(--wa); color: #fff; }
 .btn:active, .round:active { transform: scale(0.96); }
 
@@ -80,7 +84,7 @@ h2 { font-size: 20px; margin: 24px 0 8px; color: var(--muted); }
 .stats { display: flex; gap: 10px; margin: 8px 0; }
 .stat { flex: 1; background: #fff; border-radius: 14px; padding: 10px; text-align: center; font-size: 16px; display: flex; flex-direction: column; }
 .stat b { font-size: 26px; direction: ltr; }
-.stat.blue b { color: var(--blue); }
+.stat.primary b { color: var(--primary); }
 .stat.green b { color: var(--green); }
 .stat.red b { color: var(--red); }
 
@@ -94,7 +98,7 @@ h2 { font-size: 20px; margin: 24px 0 8px; color: var(--muted); }
 .form { display: flex; flex-direction: column; gap: 12px; }
 .form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 16px; }
 .form input:not([type='checkbox']) { padding: 12px; border: 2px solid var(--line); border-radius: 12px; font-size: 20px; background: #fff; width: 100%; }
-.form input:focus { outline: none; border-color: var(--blue); }
+.form input:focus { outline: none; border-color: var(--primary); }
 .form .huge { font-size: 36px; font-weight: 800; text-align: center; }
 .form .check { flex-direction: row; align-items: center; gap: 10px; }
 .form .check input { width: 26px; height: 26px; }
@@ -111,7 +115,7 @@ h2 { font-size: 20px; margin: 24px 0 8px; color: var(--muted); }
 .tabs .ico { position: relative; }
 .dot { position: absolute; top: 2px; inset-inline-end: -4px; width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; }
 .login { max-width: 420px; margin: 0 auto; padding: 32px 16px; text-align: center; }
-.login .logo { width: 112px; height: 112px; }
+.login .logo { width: 200px; height: auto; display: block; margin: 0 auto; }
 .login .form { text-align: start; }
 .pinbox { font-size: 32px !important; letter-spacing: 12px; text-align: center; }
 .error { background: #fde8e8; color: var(--red); padding: 10px; border-radius: 12px; font-weight: 600; }
@@ -140,7 +144,7 @@ h2 { font-size: 20px; margin: 24px 0 8px; color: var(--muted); }
 .round .fa-solid { font-size: 18px; }
 .cat .fa-solid { font-size: 26px; margin-bottom: 4px; }
 .catico { color: var(--red); width: 32px; text-align: center; }
-h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
+h1 .fa-solid { color: var(--primary); margin-inline-end: 4px; }
 .form label > span .fa-solid, .stat small .fa-solid { color: var(--muted); }
 .orangetext { color: #f59e0b; }
 .x { color: var(--red); }
@@ -157,14 +161,14 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
   position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
   padding: 8px 16px; padding-top: calc(8px + env(safe-area-inset-top)); background: var(--card); border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; color: var(--blue); }
-.brand .bikeicon { width: 30px; height: 24px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; color: var(--primary); }
+.brand img { height: 34px; width: auto; display: block; }
 .menubtn { position: relative; width: 44px; height: 44px; border: 0; border-radius: 12px; background: #f1f4f8; font-size: 20px; }
 .menubtn .dot { top: 6px; right: 6px; }
 .brand { margin-inline-end: auto; }
 .topbar .menubtn + .menubtn { margin-inline-start: 8px; }
-.addcust { background: var(--blue); color: #fff; }
-.addcust.on { background: #1557b0; }
+.addcust { background: var(--primary); color: #fff; }
+.addcust.on { background: var(--primary-dark); }
 .syncbtn { color: var(--green); }
 .syncbtn.pending { color: #f59e0b; }
 .syncbtn.off { color: var(--muted); }
@@ -183,8 +187,8 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
   padding: 12px 14px; border-radius: 10px; font-size: 17px;
 }
 .menu button .fa-solid { width: 22px; color: var(--muted); }
-.menu button.on { background: #eaf2fd; color: var(--blue); font-weight: 700; }
-.menu button.on .fa-solid { color: var(--blue); }
+.menu button.on { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+.menu button.on .fa-solid { color: var(--primary); }
 .menu button .dot { position: static; margin-inline-start: auto; }
 
 /* Delivery screen */
@@ -218,7 +222,7 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
 [dir='rtl'] .search { padding: 4px 14px 4px 6px; }
 .search input { flex: 1; min-width: 0; border: 0; background: none; padding: 10px 6px; font-size: 17px; outline: none; color: var(--text); }
 .search button { width: 42px; height: 42px; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: 18px; flex: none; }
-.search button:last-child { background: #eaf2fd; color: var(--blue); }
+.search button:last-child { background: var(--primary-soft); color: var(--primary); }
 .search button.live { background: var(--red); color: #fff; animation: pulse 1s infinite; }
 @keyframes pulse { 50% { opacity: 0.6; } }
 
@@ -227,11 +231,11 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
 .linkbtn.red { color: var(--red); }
 .card.danger { margin-top: 24px; }
 .footer { display: flex; justify-content: center; gap: 16px; margin: 16px 0; }
-.footer a { color: var(--blue); }
+.footer a { color: var(--primary); }
 
 /* Delivery: add customer + on-the-spot payment */
 .searchrow { display: flex; align-items: center; gap: 8px; }
-.addbtn { flex: none; width: 52px; height: 52px; border: 0; border-radius: 14px; background: var(--blue); color: #fff; font-size: 20px; box-shadow: 0 1px 3px #0001; }
+.addbtn { flex: none; width: 52px; height: 52px; border: 0; border-radius: 14px; background: var(--primary); color: #fff; font-size: 20px; box-shadow: 0 1px 3px #0001; }
 .paypill {
   display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; margin-inline-start: 8px; vertical-align: top;
   border: 0; border-radius: 999px; background: #e3f6ec; color: var(--green); font-size: 15px; font-weight: 700; margin-top: 4px;
@@ -247,7 +251,7 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
 .preview-bar .btn { flex: 1; min-width: 0; }
 
 .listhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.linkbtn.blue { color: var(--blue); text-decoration: none; }
+.linkbtn.primary { color: var(--primary); text-decoration: none; }
 .preview-bar .btn:first-child { flex-basis: 100%; }
 .voiceerr { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 4px 0 8px; }
 .preview-head { margin: 0; padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); background: var(--card); }
@@ -261,14 +265,14 @@ h1 .fa-solid { color: var(--blue); margin-inline-end: 4px; }
 }
 .fontpick span { font-size: 18px; line-height: 2.1; white-space: nowrap; }
 .fontpick small { font-size: 12px; color: var(--muted); font-family: system-ui, sans-serif; }
-.fontpick .on { border-color: var(--blue); background: #eaf2fd; }
-.fontpick .on small { color: var(--blue); font-weight: 700; }
+.fontpick .on { border-color: var(--primary); background: var(--primary-soft); }
+.fontpick .on small { color: var(--primary); font-weight: 700; }
 
 .datebar > div { display: flex; flex-direction: column; gap: 4px; }
 /* Small action pills under a customer's details (Delivery + Customers) */
 .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .pills .paypill { margin: 0; }
-.paypill.bill { background: #eaf2fd; color: var(--blue); }
+.paypill.bill { background: var(--primary-soft); color: var(--primary); }
 .paypill.give { background: var(--green); color: #fff; }
 
 /* Nastaliq glyphs sit low in the line box, so icons beside Urdu text look too high.
@@ -294,7 +298,7 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 /* Segmented filter (Payments) */
 .segments { display: flex; background: #e9eef5; border-radius: 12px; padding: 4px; gap: 4px; margin: 8px 0; }
 .segments button { flex: 1; border: 0; background: none; border-radius: 9px; padding: 8px 4px; font-size: 16px; font-weight: 600; color: var(--muted); }
-.segments button.on { background: var(--card); color: var(--blue); box-shadow: 0 1px 3px #0002; }
+.segments button.on { background: var(--card); color: var(--primary); box-shadow: 0 1px 3px #0002; }
 .plain .grow { text-align: start; }
 .span-full .sharebtn { align-self: center; margin-top: 8px; }
 .paypill.del { background: #fde8e8; color: var(--red); }

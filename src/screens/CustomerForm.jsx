@@ -36,7 +36,7 @@ export default function CustomerForm({ customer, onDone }) {
         </label>
       )}
       <div className="two">
-        <button type="submit" className="btn blue solid"><Icon name="thumbs-up" /> {t.save}</button>
+        <button type="submit" className="btn primary solid"><Icon name="thumbs-up" /> {t.save}</button>
         <button type="button" className="btn" onClick={onDone}>{t.cancel}</button>
       </div>
     </form>

@@ -5,5 +5,5 @@ import pkg from './package.json' with { type: 'json' };
 export default defineConfig({
   plugins: [react()],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
-  server: { proxy: { '/api': 'http://localhost:8000' } },
+  server: { proxy: { '/api': 'http://localhost:8000', '/admin': 'http://localhost:8000' } }, // /admin = built dashboard
 });

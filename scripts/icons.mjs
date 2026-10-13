@@ -1,41 +1,42 @@
-// Builds every app icon and the Android splash screen from the main logo (public/icon.svg).
-// Run with: npm run icons
+// Builds every app icon, the in-app logo and the Android splash screen from the bike logo
+// (public/moopartner-bike.png). Run with: npm run icons
 import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
 
 const root = path.resolve(import.meta.dirname, '..');
-const logo = fs.readFileSync(path.join(root, 'public/icon.svg'), 'utf8');
+const source = path.join(root, 'public/moopartner-bike.png');
 const res = path.join(root, 'android/app/src/main/res');
+const TILE = '#ffffff'; // icon / splash background; the green bike reads best on white
 
-const png = (svg, size, file) =>
-  sharp(Buffer.from(svg), { density: 600 }).resize(size, size).png().toFile(file);
+// The bike, trimmed and fitted inside a `box`-sized square (keeps its aspect ratio).
+const bike = (box) =>
+  sharp(source).trim().resize(box, box, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
 
-// Full-bleed version (no rounded corners) for places where the OS applies its own shape.
-const square = logo.replace('rx="112"', 'rx="0"');
+// `size` square with the bike filling `fill` of it, on white; optional corner radius or circle.
+async function tile(size, fill, file, { radius = 0, circle = false, transparent = false } = {}) {
+  const inner = Math.round(size * fill);
+  const layers = [{ input: await bike(inner), gravity: 'center' }];
+  const shape = circle
+    ? `<circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}"/>`
+    : `<rect width="${size}" height="${size}" rx="${radius}"/>`;
+  if (radius || circle) {
+    layers.push({ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${shape}</svg>`), blend: 'dest-in' });
+  }
+  const background = transparent ? { r: 0, g: 0, b: 0, alpha: 0 } : TILE;
+  await sharp({ create: { width: size, height: size, channels: 4, background } }).composite(layers).png().toFile(file);
+}
 
-// Android adaptive icons are two layers, and only the centre ~2/3 is always visible.
-// Background: sky + milk wave edge to edge. Foreground: sun, drop, bike and cans, scaled into the safe zone.
-const waves = logo.match(/<path d="M0 4[^"]*"[^>]*\/>/g);
-const background = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  ${logo.match(/<defs>[\s\S]*?<\/defs>/)[0]}
-  <rect width="512" height="512" fill="url(#sky)"/>
-  <g transform="translate(0 -36)">${waves.join('').replaceAll('V512 H0', 'V560 H0')}</g>
-</svg>`;
-let foreground = square.replace('<rect width="512" height="512" fill="url(#sky)"/>', '');
-for (const w of waves) foreground = foreground.replace(w, '');
-foreground = foreground
-  .replace('</defs>', '</defs><g transform="translate(256 256) scale(0.68) translate(-256 -256)">')
-  .replace(/<\/svg>\s*$/, '</g></svg>');
-
-const round = square.replace('</defs>', '<clipPath id="round"><circle cx="256" cy="256" r="256"/></clipPath></defs><g clip-path="url(#round)">')
-  .replace(/<\/svg>\s*$/, '</g></svg>');
+// --- In-app logo (login screen, header): a lighter copy of the bike
+await sharp(source).trim().resize(480).png({ compressionLevel: 9, palette: true, quality: 90 })
+  .toFile(path.join(root, 'public/logo.png'));
 
 // --- Web / PWA
-await png(logo, 192, path.join(root, 'public/icon-192.png'));
-await png(logo, 512, path.join(root, 'public/icon-512.png'));
-await png(square, 512, path.join(root, 'public/icon-maskable-512.png'));
-await png(square, 180, path.join(root, 'public/apple-touch-icon.png'));
+await tile(192, 0.86, path.join(root, 'public/icon-192.png'), { radius: 42 });
+await tile(512, 0.86, path.join(root, 'public/icon-512.png'), { radius: 112 });
+await tile(512, 0.7, path.join(root, 'public/icon-maskable-512.png')); // OS crops to its own shape
+await tile(180, 0.86, path.join(root, 'public/apple-touch-icon.png'));
+await tile(64, 0.92, path.join(root, 'public/favicon.png'), { transparent: true });
 
 // --- Android launcher icons
 if (fs.existsSync(res)) {
@@ -43,34 +44,47 @@ if (fs.existsSync(res)) {
   for (const [name, scale] of Object.entries(densities)) {
     const dir = path.join(res, `mipmap-${name}`);
     fs.mkdirSync(dir, { recursive: true });
-    await png(logo, Math.round(48 * scale), path.join(dir, 'ic_launcher.png'));
-    await png(round, Math.round(48 * scale), path.join(dir, 'ic_launcher_round.png'));
-    await png(foreground, Math.round(108 * scale), path.join(dir, 'ic_launcher_foreground.png'));
-    await png(background, Math.round(108 * scale), path.join(dir, 'ic_launcher_background.png'));
+    const legacy = Math.round(48 * scale);
+    const adaptive = Math.round(108 * scale);
+    await tile(legacy, 0.84, path.join(dir, 'ic_launcher.png'), { radius: Math.round(legacy * 0.22) });
+    await tile(legacy, 0.78, path.join(dir, 'ic_launcher_round.png'), { circle: true });
+    // Adaptive icons: only the centre ~66% is always visible, so the bike sits inside that.
+    await tile(adaptive, 0.56, path.join(dir, 'ic_launcher_foreground.png'), { transparent: true });
+    await sharp({ create: { width: adaptive, height: adaptive, channels: 4, background: TILE } }).png()
+      .toFile(path.join(dir, 'ic_launcher_background.png'));
   }
 
-  const adaptive = `<?xml version="1.0" encoding="utf-8"?>
+  const adaptiveXml = `<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@mipmap/ic_launcher_background" />
     <foreground android:drawable="@mipmap/ic_launcher_foreground" />
 </adaptive-icon>
 `;
   fs.mkdirSync(path.join(res, 'mipmap-anydpi-v26'), { recursive: true });
-  fs.writeFileSync(path.join(res, 'mipmap-anydpi-v26/ic_launcher.xml'), adaptive);
-  fs.writeFileSync(path.join(res, 'mipmap-anydpi-v26/ic_launcher_round.xml'), adaptive);
+  fs.writeFileSync(path.join(res, 'mipmap-anydpi-v26/ic_launcher.xml'), adaptiveXml);
+  fs.writeFileSync(path.join(res, 'mipmap-anydpi-v26/ic_launcher_round.xml'), adaptiveXml);
 
-  // --- Splash screens: the logo centred on the brand blue, at every size Capacitor created.
+  // --- Splash screens: the bike with the MooPartner wordmark under it, centred on white,
+  // at every size Capacitor created.
+  const wordmark = path.join(root, 'public/moopartner-wordmark.png');
   for (const dir of fs.readdirSync(res).filter((d) => d.startsWith('drawable'))) {
     const file = path.join(res, dir, 'splash.png');
     if (!fs.existsSync(file)) continue;
     const { width, height } = await sharp(file).metadata();
-    const size = Math.round(Math.min(width, height) * 0.38);
-    const mark = await sharp(Buffer.from(logo), { density: 600 }).resize(size, size).png().toBuffer();
-    await sharp({ create: { width, height, channels: 4, background: '#1e6fd9' } })
-      .composite([{ input: mark, gravity: 'center' }])
+    const side = Math.min(width, height);
+    const mark = await sharp(await bike(Math.round(side * 0.6))).trim().toBuffer();
+    const text = await sharp(wordmark).trim().resize(Math.round(side * 0.62)).toBuffer();
+    const [m, w] = await Promise.all([sharp(mark).metadata(), sharp(text).metadata()]);
+    const gap = Math.round(side * 0.05);
+    const top = Math.round((height - m.height - gap - w.height) / 2);
+    await sharp({ create: { width, height, channels: 4, background: TILE } })
+      .composite([
+        { input: mark, left: Math.round((width - m.width) / 2), top },
+        { input: text, left: Math.round((width - w.width) / 2), top: top + m.height + gap },
+      ])
       .png()
       .toFile(file);
   }
 }
 
-console.log('Icons and splash screens updated from public/icon.svg');
+console.log('Icons, logo and splash screens updated from public/moopartner-bike.png');

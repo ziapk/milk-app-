@@ -7,10 +7,10 @@ const scrypt = promisify(crypto.scrypt);
 const MAX_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
 
-const cleanPhone = (p) => String(p || "").replace(/\D/g, "");
-const validPin = (pin) => /^\d{4,6}$/.test(String(pin || ""));
+export const cleanPhone = (p) => String(p || "").replace(/\D/g, "");
+export const validPin = (pin) => /^\d{4,6}$/.test(String(pin || ""));
 
-async function hashPin(pin) {
+export async function hashPin(pin) {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = await scrypt(String(pin), salt, 64);
   return `${salt}:${hash.toString("hex")}`;
@@ -61,12 +61,13 @@ export const login = async (req, res) => {
   const { pin } = req.body || {};
 
   const [rows] = await db.execute(
-    `SELECT id, name, pin_hash, failed_attempts, locked_until > NOW() AS locked
+    `SELECT id, name, pin_hash, failed_attempts, disabled, locked_until > NOW() AS locked
      FROM distributors WHERE phone = ? LIMIT 1`,
     [phone],
   );
   const user = rows[0];
   if (!user) return res.status(401).json({ error: "wrong_login" });
+  if (user.disabled) return res.status(403).json({ error: "disabled" });
   if (user.locked) return res.status(429).json({ error: "locked" });
 
   if (!validPin(pin) || !(await checkPin(pin, user.pin_hash))) {
@@ -85,7 +86,7 @@ export const login = async (req, res) => {
   }
 
   await db.execute(
-    `UPDATE distributors SET failed_attempts = 0, locked_until = NULL WHERE id = ?`,
+    `UPDATE distributors SET failed_attempts = 0, locked_until = NULL, last_seen_at = NOW() WHERE id = ?`,
     [user.id],
   );
   const token = await newSession(user.id);

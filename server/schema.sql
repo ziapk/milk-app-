@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS distributors (
   pin_hash VARCHAR(200) NOT NULL,
   failed_attempts INT NOT NULL DEFAULT 0,
   locked_until DATETIME NULL,
+  disabled TINYINT(1) NOT NULL DEFAULT 0,
+  last_seen_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -75,4 +77,24 @@ CREATE TABLE IF NOT EXISTS expenses (
   PRIMARY KEY (distributor_id, id),
   KEY idx_expenses_sync (distributor_id, updated_at),
   FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+);
+
+-- Dashboard logins (separate from distributors, who use the phone app).
+CREATE TABLE IF NOT EXISTS admins (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
+  password_hash VARCHAR(200) NOT NULL,
+  failed_attempts INT NOT NULL DEFAULT 0,
+  locked_until DATETIME NULL,
+  last_login_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS admin_sessions (
+  token CHAR(64) PRIMARY KEY,
+  admin_id INT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_used_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 );

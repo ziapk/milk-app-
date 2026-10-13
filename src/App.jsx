@@ -69,7 +69,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand"><BikeIcon /> {t.appName}</div>
+        <div className="brand"><img src="/logo.png" alt="" /> {t.appName}</div>
         <button
           className={`menubtn addcust ${adding ? 'on' : ''}`}
           aria-label={t.addCustomer}

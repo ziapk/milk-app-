@@ -15,7 +15,10 @@ export const requireAuth = async (req, res, next) => {
   if (rows.length === 0) return res.status(401).json({ error: "unauthorized" });
 
   // Sliding expiry; only written once an hour so every sync isn't a DB write.
-  if (rows[0].stale) await db.execute(`UPDATE sessions SET last_used_at = NOW() WHERE token = ?`, [token]);
+  if (rows[0].stale) {
+    await db.execute(`UPDATE sessions SET last_used_at = NOW() WHERE token = ?`, [token]);
+    await db.execute(`UPDATE distributors SET last_seen_at = NOW() WHERE id = ?`, [rows[0].distributor_id]);
+  }
 
   req.distributorId = rows[0].distributor_id;
   req.token = token;

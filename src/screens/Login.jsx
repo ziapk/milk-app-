@@ -29,21 +29,21 @@ export default function Login() {
 
   return (
     <main className="login">
-      <img className="logo" src="/icon.svg" alt="" />
+      <img className="logo" src="/logo.png" alt="" />
       <h1>{t.appName}</h1>
       <form className="card form" onSubmit={submit}>
         {isNew && <label><span><Icon name="user" /> {t.name}</span><input value={f.name} onChange={set('name')} required /></label>}
         <label><span><Icon name="phone" /> {t.phone}</span><input value={f.phone} onChange={set('phone')} inputMode="tel" dir="ltr" placeholder="03001234567" required /></label>
         <label><span><Icon name="lock" /> {t.pin}</span><input className="pinbox" value={f.pin} onChange={set('pin')} inputMode="numeric" type="password" maxLength={6} dir="ltr" required /></label>
         {error && <div className="error"><Icon name="triangle-exclamation" /> {error}</div>}
-        <button className="btn blue solid wide" disabled={busy}>{busy ? <Icon name="spinner" spin /> : isNew ? <><Icon name="user-plus" /> {t.register}</> : <><Icon name="right-to-bracket" flip /> {t.login}</>}</button>
+        <button className="btn primary solid wide" disabled={busy}>{busy ? <Icon name="spinner" spin /> : isNew ? <><Icon name="user-plus" /> {t.register}</> : <><Icon name="right-to-bracket" flip /> {t.login}</>}</button>
         <button type="button" className="btn wide" onClick={() => setIsNew(!isNew)}>
           {isNew ? t.haveAccount : t.newAccount}
         </button>
       </form>
       <div className="two">
-        <button className={`btn ${data.lang === 'ur' ? 'blue solid' : ''}`} onClick={() => setLang('ur')}>اردو</button>
-        <button className={`btn ${data.lang === 'en' ? 'blue solid' : ''}`} onClick={() => setLang('en')}>English</button>
+        <button className={`btn ${data.lang === 'ur' ? 'primary solid' : ''}`} onClick={() => setLang('ur')}>اردو</button>
+        <button className={`btn ${data.lang === 'en' ? 'primary solid' : ''}`} onClick={() => setLang('en')}>English</button>
       </div>
     </main>
   );

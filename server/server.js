@@ -3,6 +3,7 @@ import cors from "cors";
 import path from "node:path";
 import authRoutes from "./routes/authRoutes.js";
 import syncRoutes from "./routes/syncRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import { migrate } from "./migrate.js";
 
 const app = express();
@@ -12,6 +13,10 @@ app.use(express.json({ limit: "5mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/sync", syncRoutes);
+app.use("/api/admin", adminRoutes);
+
+// Admin dashboard (built with `npm run build:admin` in the parent folder): http://<server>/admin
+app.use("/admin", express.static(path.join(import.meta.dirname, "admin-dist")));
 
 // Serve the built app (npm run build in the parent folder) so one server hosts everything.
 app.use(express.static(path.join(import.meta.dirname, "../dist")));

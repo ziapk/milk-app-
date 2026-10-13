@@ -73,7 +73,7 @@ export default function Today() {
       {adding ? (
         <CustomerForm onDone={() => setAdding(false)} />
       ) : list.length === 0 ? (
-        <button className="btn blue solid wide" onClick={() => setAdding(true)}>
+        <button className="btn primary solid wide" onClick={() => setAdding(true)}>
           <Icon name="user-plus" /> {t.addCustomer}
         </button>
       ) : (

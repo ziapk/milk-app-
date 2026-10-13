@@ -44,7 +44,7 @@ export default function SearchBar({ value, onChange }) {
         <div className="muted center voiceerr">
           {error}
           {canOpenVoiceSettings() && error === t.voiceFailed && (
-            <button className="linkbtn blue" onClick={() => openVoiceSettings().catch(() => {})}>
+            <button className="linkbtn primary" onClick={() => openVoiceSettings().catch(() => {})}>
               <Icon name="download" /> {t.offlineVoiceGet}
             </button>
           )}

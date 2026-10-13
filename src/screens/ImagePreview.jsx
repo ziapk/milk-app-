@@ -27,7 +27,7 @@ export default function ImagePreview({ canvas, fileName, title, onClose, header,
         <img src={canvas.toDataURL('image/png')} alt={title} />
       </div>
       <div className="preview-bar">
-        <button className="btn blue solid" onClick={share} disabled={busy}>
+        <button className="btn primary solid" onClick={share} disabled={busy}>
           <Icon name={busy ? 'spinner' : 'share-nodes'} spin={busy} /> {t.share}
         </button>
         {children}

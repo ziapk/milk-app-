@@ -47,10 +47,10 @@ async function drawSheet({ t, lang, font, seller, title, subtitle, columns, rows
 
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#1e6fd9';
+  ctx.fillStyle = '#01822F';
   ctx.fillRect(0, 0, W, 150);
   text(t.appName, PAD, 60, { size: 48, weight: 800, color: '#fff' });
-  text(`${seller.name}  ·  ${seller.phone}`, PAD, 112, { size: 28, color: '#dbe8fb' });
+  text(`${seller.name}  ·  ${seller.phone}`, PAD, 112, { size: 28, color: '#d6eedd' });
   text(title, PAD, 215, { size: 44, weight: 800, width: W - PAD * 2 });
   text(subtitle, PAD, 275, { size: 30, color: '#6b7686' });
 

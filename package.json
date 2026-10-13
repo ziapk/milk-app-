@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build",
+    "admin": "vite -c vite.admin.config.js",
+    "build": "vite build && vite build -c vite.admin.config.js",
+    "build:admin": "vite build -c vite.admin.config.js",
     "preview": "vite preview --host",
     "apk": "vite build --mode android && CAP_HTTP=1 cap sync android && cd android && ./gradlew assembleDebug",
     "apk:release": "vite build --mode android && cap sync android && cd android && ./gradlew assembleRelease",

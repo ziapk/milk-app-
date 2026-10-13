@@ -49,7 +49,7 @@ export default function CustomerDetail({ id, onBack }) {
       <div className="card center">
         <Balance amount={bal} />
         {c.address && <div className="muted"><Icon name="house" /> {c.address}</div>}
-        {c.phone && <a className="linkbtn blue" href={`tel:${c.phone}`} dir="ltr"><Icon name="phone" /> {c.phone}</a>}
+        {c.phone && <a className="linkbtn primary" href={`tel:${c.phone}`} dir="ltr"><Icon name="phone" /> {c.phone}</a>}
         <ActiveSwitch customer={c} />
       </div>
 
@@ -60,7 +60,7 @@ export default function CustomerDetail({ id, onBack }) {
       </header>
 
       <div className="stats">
-        <div className="stat blue"><small><Icon name="bottle-droplet" /> {t.liters}</small><b>{m.liters}</b></div>
+        <div className="stat primary"><small><Icon name="bottle-droplet" /> {t.liters}</small><b>{m.liters}</b></div>
         <div className="stat"><small><Icon name="file-invoice" /> {t.bill}</small><b>{money(m.amount)}</b></div>
         <div className="stat green"><small><Icon name="money-bill-wave" /></small><b>{money(mPaid)}</b></div>
       </div>
@@ -86,7 +86,7 @@ export default function CustomerDetail({ id, onBack }) {
       ) : (
         <button className="btn green solid wide" onClick={() => setMode('pay')}><Icon name="money-bill-wave" /> {t.receive}</button>
       )}
-      <button className="btn blue wide" onClick={() => setBillOpen(true)}><Icon name="image" /> {t.shareBill}</button>
+      <button className="btn primary wide" onClick={() => setBillOpen(true)}><Icon name="image" /> {t.shareBill}</button>
       <button
         className="linkbtn red deletelink"
         onClick={() => {

@@ -29,13 +29,13 @@ export default function Customers({ onOpen }) {
       <div className="listhead">
         <h1><Icon name="users" /> {t.customers}</h1>
         {data.customers.length > 0 && (
-          <button className="btn blue compact" onClick={() => setReport(true)}><Icon name="chart-column" /> {t.monthlyReport}</button>
+          <button className="btn primary compact" onClick={() => setReport(true)}><Icon name="chart-column" /> {t.monthlyReport}</button>
         )}
       </div>
       {adding ? (
         <CustomerForm onDone={() => setAdding(false)} />
       ) : (
-        <button className="btn blue solid wide" onClick={() => setAdding(true)}><Icon name="user-plus" /> {t.addCustomer}</button>
+        <button className="btn primary solid wide" onClick={() => setAdding(true)}><Icon name="user-plus" /> {t.addCustomer}</button>
       )}
       {data.customers.length > 0 && <SearchBar value={query} onChange={setQuery} />}
       {query && list.length === 0 && <p className="empty">{t.noMatch}</p>}

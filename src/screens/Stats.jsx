@@ -21,7 +21,7 @@ export default function Stats() {
         <div className="stat green"><small><Icon name="sun" /> {t.collectedToday}</small><b>{money(collectedToday)}</b></div>
         <div className="stat green"><small><Icon name="calendar-days" /> {t.collectedMonth}</small><b>{money(collectedMonth)}</b></div>
         <div className="stat red"><small><Icon name="receipt" /> {t.spentMonth}</small><b>{money(spentMonth)}</b></div>
-        <div className={`stat ${saving >= 0 ? 'blue' : 'red'}`}><small><Icon name="piggy-bank" /> {t.saving}</small><b>{money(saving)}</b></div>
+        <div className={`stat ${saving >= 0 ? 'primary' : 'red'}`}><small><Icon name="piggy-bank" /> {t.saving}</small><b>{money(saving)}</b></div>
         <div className="stat red span2"><small><Icon name="hourglass-half" /> {t.totalDue}</small><b>{money(totalDue)}</b></div>
       </div>
     </>

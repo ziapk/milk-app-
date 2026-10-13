@@ -60,7 +60,7 @@ export default function Expenses() {
         <small><Icon name="receipt" /> {t.expensesCount(list.length)}</small>
         <b>{t.rs} {money(spent)}</b>
         {list.length > 0 && (
-          <button className="btn blue compact sharebtn" onClick={showList}><Icon name="share-nodes" /> {t.share}</button>
+          <button className="btn primary compact sharebtn" onClick={showList}><Icon name="share-nodes" /> {t.share}</button>
         )}
       </div>
 

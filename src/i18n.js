@@ -104,6 +104,7 @@ const dict = {
     errors: {
       wrong_login: 'فون نمبر یا خفیہ نمبر غلط ہے',
       locked: 'بہت زیادہ غلط کوشش۔ 15 منٹ بعد دوبارہ کوشش کریں',
+      disabled: 'یہ اکاؤنٹ بند کر دیا گیا ہے۔ مدد کے لیے رابطہ کریں',
       phone_taken: 'یہ فون نمبر پہلے سے موجود ہے',
       invalid_input: 'نام، صحیح فون نمبر اور 4 سے 6 ہندسوں کا خفیہ نمبر ڈالیں',
       offline: 'انٹرنیٹ نہیں ہے',
@@ -226,6 +227,7 @@ const dict = {
     errors: {
       wrong_login: 'Wrong phone number or PIN',
       locked: 'Too many wrong tries. Try again in 15 minutes',
+      disabled: 'This account has been blocked. Please contact support',
       phone_taken: 'This phone number already has an account',
       invalid_input: 'Enter a name, a valid phone number and a 4–6 digit PIN',
       offline: 'No internet',
