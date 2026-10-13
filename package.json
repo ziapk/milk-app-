@@ -13,6 +13,8 @@
     "apk:release": "vite build --mode android && cap sync android && cd android && ./gradlew assembleRelease",
     "icons": "node scripts/icons.mjs",
     "aab": "vite build --mode android && cap sync android && cd android && ./gradlew bundleRelease",
+    "admin:apk": "cd admin-app && cap sync android && cd android && ./gradlew assembleRelease",
+    "admin:apk:debug": "cd admin-app && cap sync android && cd android && ./gradlew assembleDebug",
     "bump": "npm version patch --no-git-tag-version"
   },
   "dependencies": {

@@ -1,0 +1,7 @@
+{
+  "name": "moopartner-admin-app",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Android wrapper for the MooPartner admin dashboard (loads it from the server, see capacitor.config.ts)"
+}

@@ -27,6 +27,16 @@ block/unblock, unlock, reset PIN, log out phones, delete; plus adding/removing a
 - **Dev:** `npm run admin` → http://localhost:5174/admin/ (talks to the server on :8000).
 - **Production:** `npm run build` builds the app and the dashboard; the server serves it at `/admin`.
 
+## Admin Android app
+
+`admin-app/` is a separate Android app, **MooPartner Admin** (`com.moopartner.admin`), that opens the
+admin dashboard from the server. Dashboard changes reach it on the next deploy; no new APK needed.
+
+- Server address: the `admin-url` tag in `admin-app/www/index.html` (that file is also the offline screen).
+- Build (Java 21): `npm run admin:apk` → `admin-app/android/app/build/outputs/apk/release/app-release.apk`
+  (signed with the same key as the main app, from `android/keystore.properties`).
+- Version: `admin-app/package.json`. Icons: `npm run icons` builds both apps' icons and splash screens.
+
 ## Production
 
 `npm run build` in this folder, then run `npm start` in `server/`. Express serves the built app and the API on the same port; put Caddy/Nginx with HTTPS in front (needed for "Add to Home screen").
