@@ -83,6 +83,16 @@ export default function UserPanel({ id, onClose, onChanged }) {
               <a className="btn" href={`#/customers/${u.id}`}><i className="fa-solid fa-list" /> View customers</a>
             </div>
 
+            <h3 className="drawer-sub">Supply</h3>
+            <div className="mini-stats">
+              <div><small>Suppliers</small><b>{num(u.suppliers)}</b></div>
+              <div><small>Milk bought this month</small><b>{num(u.boughtMonth, 1)} L</b></div>
+              <div><small>Owed to suppliers</small><b>{money(Math.max(0, u.owedSuppliers))}</b><span className="muted small">all time</span></div>
+            </div>
+            <div className="row-btns">
+              <a className="btn" href={`#/suppliers/${u.id}`}><i className="fa-solid fa-truck" /> View suppliers</a>
+            </div>
+
             <h3 className="drawer-sub">Account</h3>
             <div className="actions">
               {u.locked && (

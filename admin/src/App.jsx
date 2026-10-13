@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Overview from './pages/Overview';
 import Users from './pages/Users';
 import Customers from './pages/Customers';
+import Suppliers from './pages/Suppliers';
 import Admins from './pages/Admins';
 import Account from './pages/Account';
 import logo from '../../public/logo.png';
@@ -13,6 +14,7 @@ const PAGES = [
   ['overview', 'Overview', 'chart-line'],
   ['users', 'Users', 'users'],
   ['customers', 'Customers', 'house-user'],
+  ['suppliers', 'Suppliers', 'truck'],
   ['admins', 'Admins', 'user-shield'],
   ['account', 'My account', 'circle-user'],
 ];
@@ -92,6 +94,7 @@ export default function App() {
             {route.page === 'overview' && <Overview />}
             {route.page === 'users' && <Users openId={route.id} />}
             {route.page === 'customers' && <Customers userId={route.id} />}
+            {route.page === 'suppliers' && <Suppliers userId={route.id} />}
             {route.page === 'admins' && <Admins />}
             {route.page === 'account' && <Account admin={admin} />}
           </main>

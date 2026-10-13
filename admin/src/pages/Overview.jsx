@@ -36,6 +36,18 @@ export default function Overview() {
         <Stat label="Payments collected" value={money(month.collected)} icon="money-bill-wave" tone="good" />
       </section>
 
+      {data.supply.suppliers > 0 && (
+        <>
+          <h2 className="section-title">Milk bought from suppliers · {monthName}</h2>
+          <section className="stats">
+            <Stat label="Milk bought" value={`${num(data.supply.liters, 1)} L`} icon="truck" sub={money(data.supply.amount)} />
+            <Stat label="Paid to suppliers" value={money(data.supply.paid)} icon="hand-holding-dollar" />
+            <Stat label="Owed to suppliers" value={money(Math.max(0, data.supply.owed))} icon="scale-unbalanced" tone={data.supply.owed > 0.5 ? 'bad' : ''} sub="All time, all users" />
+            <Stat label="Suppliers" value={num(data.supply.suppliers)} icon="people-carry-box" sub={<a href="#/suppliers">View all</a>} />
+          </section>
+        </>
+      )}
+
       <div className="grid-2">
         <section className="panel">
           <div className="panel-head">

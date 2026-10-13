@@ -203,6 +203,20 @@ main { padding: 12px 28px 48px; max-width: 1200px; }
 .row-btns { display: flex; gap: 8px; margin-top: 10px; }
 .row-btns .btn { flex: 1; }
 
+/* ---------- suppliers ---------- */
+.owed-text { color: var(--red); }
+.table td.paid { color: var(--primary); font-weight: 600; }
+.drawer.wide { width: min(560px, 100%); }
+.monthbar { display: flex; align-items: center; justify-content: space-between; margin: 14px 0; background: #f6f9f7; border-radius: 12px; padding: 4px; }
+.monthbar .iconbtn:disabled { opacity: 0.3; cursor: default; }
+.row-btns.tight { margin: 0; gap: 2px; }
+.ledger-table { margin: 14px 0 8px; }
+.ledger-table td { white-space: nowrap; }
+.ledger-table td:nth-child(2) { white-space: normal; }
+.ledger-table tr.total td { font-weight: 700; border-top: 2px solid var(--line); }
+.buy-ico { color: var(--primary); width: 16px; }
+.pay-ico { color: var(--navy-2); width: 16px; }
+
 /* ---------- drawer ---------- */
 .drawer-veil { position: fixed; inset: 0; background: #02162740; z-index: 30; }
 .drawer {
@@ -287,3 +301,4 @@ main { padding: 12px 28px 48px; max-width: 1200px; }
   .table.users .chev { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); }
   .facts, .mini-stats { grid-template-columns: 1fr 1fr; }
 }
+.table td.r { white-space: nowrap; }

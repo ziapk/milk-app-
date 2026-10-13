@@ -40,6 +40,15 @@ export const overview = async (req, res) => {
   const [[{ collected }]] = await db.query(
     `SELECT COALESCE(SUM(amount), 0) AS collected FROM payments WHERE deleted = 0 AND date >= ${MONTH_START}`,
   );
+  const [[supply]] = await db.query(
+    `SELECT
+       (SELECT COALESCE(SUM(qty), 0) FROM purchases WHERE deleted = 0 AND date >= ${MONTH_START}) AS liters,
+       (SELECT COALESCE(SUM(qty * rate), 0) FROM purchases WHERE deleted = 0 AND date >= ${MONTH_START}) AS amount,
+       (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE deleted = 0 AND date >= ${MONTH_START}) AS paid,
+       (SELECT COALESCE(SUM(qty * rate), 0) FROM purchases WHERE deleted = 0) -
+       (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE deleted = 0) AS owed,
+       (SELECT COUNT(*) FROM suppliers WHERE deleted = 0) AS suppliers`,
+  );
   const liters = await dailySeries(
     `SELECT date AS day, SUM(qty) AS value FROM deliveries
      WHERE deleted = 0 AND date > CURDATE() - INTERVAL ${DAYS} DAY GROUP BY date`,
@@ -58,6 +67,13 @@ export const overview = async (req, res) => {
     users,
     customers,
     month: { liters: Number(month.liters), sales: Number(month.sales), collected: Number(collected) },
+    supply: {
+      suppliers: Number(supply.suppliers),
+      liters: Number(supply.liters),
+      amount: Number(supply.amount),
+      paid: Number(supply.paid),
+      owed: Number(supply.owed),
+    },
     liters,
     signups,
     top: top.map((t) => ({ ...t, liters: Number(t.liters), sales: Number(t.sales) })),
@@ -97,9 +113,20 @@ export const userDetail = async (req, res) => {
        AND last_used_at > NOW() - INTERVAL ${SESSION_DAYS} DAY`,
     [id],
   );
+  const [[sup]] = await db.execute(
+    `SELECT
+       (SELECT COUNT(*) FROM suppliers WHERE distributor_id = ? AND deleted = 0) AS suppliers,
+       (SELECT COALESCE(SUM(qty), 0) FROM purchases WHERE distributor_id = ? AND deleted = 0 AND date >= ${MONTH_START}) AS boughtMonth,
+       (SELECT COALESCE(SUM(qty * rate), 0) FROM purchases WHERE distributor_id = ? AND deleted = 0) -
+       (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE distributor_id = ? AND deleted = 0) AS owedSuppliers`,
+    [id, id, id, id],
+  );
   const n = (v) => Number(v);
   res.json({
     ...user,
+    suppliers: n(sup.suppliers),
+    boughtMonth: n(sup.boughtMonth),
+    owedSuppliers: n(sup.owedSuppliers),
     disabled: !!user.disabled,
     locked: !!user.locked,
     devices,
@@ -265,4 +292,113 @@ export const updateCustomer = async (req, res) => {
   );
   if (!r.affectedRows) return res.status(404).json({ error: "not_found" });
   res.json({ status: true });
+};
+
+// --- Suppliers (milk each user buys). Same sync rule as customers: rows written here reach the
+// user's phone because sync sends everything with a newer updated_at.
+
+function supplierFields(body = {}) {
+  const name = String(body.name || "").trim().slice(0, 100);
+  const rate = Number(body.rate);
+  if (!name || !Number.isFinite(rate) || rate < 0) return null;
+  return {
+    name,
+    phone: String(body.phone || "").replace(/[^\d+]/g, "").slice(0, 20),
+    address: String(body.address || "").trim().slice(0, 255),
+    rate,
+  };
+}
+
+export const listSuppliers = async (req, res) => {
+  const userFilter = Number(req.query.user) || null;
+  const [rows] = await db.query(
+    `SELECT s.distributor_id AS userId, d.name AS userName, s.id, s.name, s.phone, s.address,
+       s.rate, s.active = 1 AS active,
+       COALESCE(b.litersMonth, 0) AS litersMonth, COALESCE(b.amountMonth, 0) AS amountMonth,
+       COALESCE(p.paidMonth, 0) AS paidMonth, b.lastPurchase,
+       COALESCE(b.amountAll, 0) - COALESCE(p.paidAll, 0) AS owed
+     FROM suppliers s
+     JOIN distributors d ON d.id = s.distributor_id
+     LEFT JOIN (
+       SELECT distributor_id, supplier_id, MAX(date) AS lastPurchase, SUM(qty * rate) AS amountAll,
+         SUM(IF(date >= ${MONTH_START}, qty, 0)) AS litersMonth,
+         SUM(IF(date >= ${MONTH_START}, qty * rate, 0)) AS amountMonth
+       FROM purchases WHERE deleted = 0 GROUP BY distributor_id, supplier_id
+     ) b ON b.distributor_id = s.distributor_id AND b.supplier_id = s.id
+     LEFT JOIN (
+       SELECT distributor_id, supplier_id, SUM(amount) AS paidAll,
+         SUM(IF(date >= ${MONTH_START}, amount, 0)) AS paidMonth
+       FROM supplier_payments WHERE deleted = 0 GROUP BY distributor_id, supplier_id
+     ) p ON p.distributor_id = s.distributor_id AND p.supplier_id = s.id
+     WHERE s.deleted = 0 ${userFilter ? "AND s.distributor_id = ?" : ""}
+     ORDER BY d.name, s.name`,
+    userFilter ? [userFilter] : [],
+  );
+  const n = (v) => Number(v);
+  res.json(rows.map((r) => ({
+    ...r, active: !!r.active, litersMonth: n(r.litersMonth), amountMonth: n(r.amountMonth), paidMonth: n(r.paidMonth), owed: n(r.owed),
+  })));
+};
+
+export const createSupplier = async (req, res) => {
+  const f = supplierFields(req.body);
+  if (!f) return res.status(400).json({ error: "invalid_supplier" });
+  const [[user]] = await db.execute(`SELECT id FROM distributors WHERE id = ?`, [userId(req)]);
+  if (!user) return res.status(404).json({ error: "not_found" });
+  const id = uid();
+  await db.execute(
+    `INSERT INTO suppliers (distributor_id, id, name, phone, address, rate, active, deleted) VALUES (?, ?, ?, ?, ?, ?, 1, 0)`,
+    [user.id, id, f.name, f.phone, f.address, f.rate],
+  );
+  res.json({ id, ...f });
+};
+
+export const updateSupplier = async (req, res) => {
+  const f = supplierFields(req.body);
+  if (!f) return res.status(400).json({ error: "invalid_supplier" });
+  const [r] = await db.execute(
+    `UPDATE suppliers SET name = ?, phone = ?, address = ?, rate = ?, active = ?, updated_at = CURRENT_TIMESTAMP(3)
+     WHERE distributor_id = ? AND id = ? AND deleted = 0`,
+    [f.name, f.phone, f.address, f.rate, req.body?.active === false ? 0 : 1, userId(req), String(req.params.supplierId)],
+  );
+  if (!r.affectedRows) return res.status(404).json({ error: "not_found" });
+  res.json({ status: true });
+};
+
+// One supplier's month: opening balance, purchases and payments in date order with a running
+// balance, and the closing balance. Positive = the user still owes the supplier.
+export const supplierLedger = async (req, res) => {
+  const uidNum = userId(req);
+  const sid = String(req.params.supplierId);
+  const month = /^\d{4}-\d{2}$/.test(req.query.month || "") ? req.query.month : new Date().toISOString().slice(0, 7);
+  const from = `${month}-01`;
+  const [[sup]] = await db.execute(
+    `SELECT s.id, s.name, s.phone, s.address, s.rate, s.active = 1 AS active, d.name AS userName
+     FROM suppliers s JOIN distributors d ON d.id = s.distributor_id
+     WHERE s.distributor_id = ? AND s.id = ? AND s.deleted = 0`,
+    [uidNum, sid],
+  );
+  if (!sup) return res.status(404).json({ error: "not_found" });
+
+  const [[open]] = await db.execute(
+    `SELECT
+       (SELECT COALESCE(SUM(qty * rate), 0) FROM purchases WHERE distributor_id = ? AND supplier_id = ? AND deleted = 0 AND date < ?) -
+       (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE distributor_id = ? AND supplier_id = ? AND deleted = 0 AND date < ?) AS opening`,
+    [uidNum, sid, from, uidNum, sid, from],
+  );
+  const [rows] = await db.execute(
+    `SELECT 'buy' AS kind, id, date, qty, rate, qty * rate AS amount, note FROM purchases
+       WHERE distributor_id = ? AND supplier_id = ? AND deleted = 0 AND date >= ? AND date < ? + INTERVAL 1 MONTH
+     UNION ALL
+     SELECT 'pay', id, date, NULL, NULL, -amount, note FROM supplier_payments
+       WHERE distributor_id = ? AND supplier_id = ? AND deleted = 0 AND date >= ? AND date < ? + INTERVAL 1 MONTH
+     ORDER BY date, kind, LENGTH(id), id`,
+    [uidNum, sid, from, from, uidNum, sid, from, from],
+  );
+  let balance = Number(open.opening);
+  const entries = rows.map((r) => {
+    balance += Number(r.amount);
+    return { ...r, qty: r.qty === null ? null : Number(r.qty), rate: r.rate === null ? null : Number(r.rate), amount: Number(r.amount), balance };
+  });
+  res.json({ supplier: { ...sup, active: !!sup.active }, month, opening: Number(open.opening), entries, closing: balance });
 };

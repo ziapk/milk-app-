@@ -44,6 +44,7 @@ const MESSAGES = {
     "Please fill in every field (username: 3+ letters, numbers, . _ -)",
   invalid_pin: "PIN must be 4–6 digits",
   invalid_user: "Enter a name and a phone number with at least 10 digits",
+  invalid_supplier: 'Enter a supplier name and a rate of 0 or more',
   invalid_customer:
     "Enter a customer name, and a rate and daily litres of 0 or more",
   phone_taken: "A user with this phone number already exists",

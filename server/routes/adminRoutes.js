@@ -1,6 +1,7 @@
 import express from "express";
 import { overview, listUsers, createUser, userDetail, setDisabled, unlock, resetPin, logoutAll, deleteUser,
-  listCustomers, createCustomer, updateCustomer } from "../controllers/adminController.js";
+  listCustomers, createCustomer, updateCustomer,
+  listSuppliers, createSupplier, updateSupplier, supplierLedger } from "../controllers/adminController.js";
 import { login, logout, me, changePassword, listAdmins, createAdmin, deleteAdmin } from "../controllers/adminAuthController.js";
 import { requireAdmin } from "../controllers/requireAdmin.js";
 
@@ -33,6 +34,11 @@ router.delete("/users/:id", deleteUser);
 router.get("/customers", listCustomers);
 router.post("/users/:id/customers", createCustomer);
 router.put("/users/:id/customers/:customerId", updateCustomer);
+
+router.get("/suppliers", listSuppliers);
+router.post("/users/:id/suppliers", createSupplier);
+router.put("/users/:id/suppliers/:supplierId", updateSupplier);
+router.get("/users/:id/suppliers/:supplierId/ledger", supplierLedger);
 
 router.get("/admins", listAdmins);
 router.post("/admins", createAdmin);
