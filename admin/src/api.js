@@ -1,6 +1,8 @@
 // All dashboard calls go to /api/admin. The session lives in an HttpOnly cookie set at login;
 // X-Admin is required by the server as a CSRF guard.
-const BASE = import.meta.env.VITE_API_URL || "/api";
+// Always same-origin: the API server also serves this dashboard (at /admin), and the session
+// cookie is only kept for same-origin requests. Don't point this at a full http://host URL.
+const BASE = "/api";
 export class ApiError extends Error {
   constructor(status, code) {
     super(code);
