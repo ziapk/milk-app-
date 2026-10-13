@@ -114,11 +114,12 @@ export const sync = async (req, res) => {
 
     for (const b of purchases) {
       await conn.execute(
-        `INSERT INTO purchases (distributor_id, id, supplier_id, date, qty, rate, note, deleted)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE supplier_id = VALUES(supplier_id), date = VALUES(date), qty = VALUES(qty),
+        `INSERT INTO purchases (distributor_id, id, supplier_id, product_id, date, qty, rate, note, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE supplier_id = VALUES(supplier_id), product_id = VALUES(product_id), date = VALUES(date), qty = VALUES(qty),
            rate = VALUES(rate), note = VALUES(note), deleted = VALUES(deleted), updated_at = CURRENT_TIMESTAMP(3)`,
-        [distributorId, b.id, b.supplierId, b.date, Number(b.qty), Number(b.rate), String(b.note || "").slice(0, 255), flag(b.deleted)],
+        [distributorId, b.id, b.supplierId, id(b.productId) && b.productId !== "main" ? b.productId : "", b.date,
+         Number(b.qty), Number(b.rate), String(b.note || "").slice(0, 255), flag(b.deleted)],
       );
     }
 
@@ -207,7 +208,7 @@ export const sync = async (req, res) => {
     args,
   );
   const [outPurchases] = await db.execute(
-    `SELECT id, supplier_id AS supplierId, date, qty, rate, note, deleted FROM purchases WHERE ${after}`,
+    `SELECT id, supplier_id AS supplierId, product_id AS productId, date, qty, rate, note, deleted FROM purchases WHERE ${after}`,
     args,
   );
   const [outSupplierPayments] = await db.execute(
@@ -239,7 +240,7 @@ export const sync = async (req, res) => {
     payments: outPayments,
     expenses: outExpenses,
     suppliers: outSuppliers.map((sp) => ({ ...sp, active: !!sp.active })),
-    purchases: outPurchases,
+    purchases: outPurchases.map(({ productId, ...b }) => (productId ? { ...b, productId } : b)),
     supplierPayments: outSupplierPayments,
     products: outProducts.map((p) => ({ ...p, active: !!p.active })),
     sales: outSales.map((s) => ({ ...s, customerId: s.customerId || null, items: parseJson(s.items, []) })),

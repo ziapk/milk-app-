@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useStore, today } from '../store';
+import { useStore, today, MAIN } from '../store';
 import { useT, money } from '../i18n';
 import Icon from '../Icon';
 import { useBackClose } from '../back';
@@ -15,7 +15,7 @@ export default function SupplierLedger({ id, onBack }) {
   const store = useStore();
   const { data, bought, paidSupplier, supplierBalance, deletePurchase, deleteSupplierPayment, deleteSupplier } = store;
   const t = useT();
-  const { main } = useProducts();
+  const { main, byId } = useProducts();
   const sp = store.supplierById(id);
   const [month, setMonth] = useState(today().slice(0, 7));
   const [mode, setMode] = useState(null); // 'edit' | 'buy' | 'pay'
@@ -41,6 +41,11 @@ export default function SupplierLedger({ id, onBack }) {
   ].sort((a, b) => a.row.date.localeCompare(b.row.date) || (a.kind === b.kind ? byCreation(a.row.id, b.row.id) : a.kind === 'b' ? -1 : 1));
   let running = opening;
   for (const e of entries) e.balance = running += e.amount;
+
+  const purchaseText = (b) => {
+    const p = byId(b.productId || MAIN) || main;
+    return t.purchaseLine(num(b.qty), p.unit, p.name, money(b.rate));
+  };
 
   const locale = data.lang === 'ur' ? 'ur-PK' : 'en-PK';
   const monthName = new Date(from + 'T00:00:00').toLocaleDateString(locale, { month: 'long', year: 'numeric' });
@@ -103,7 +108,7 @@ export default function SupplierLedger({ id, onBack }) {
                   <Icon name={e.kind === 'b' ? 'bottle-droplet' : 'money-bill-wave'} />
                 </span>
                 <div className="grow">
-                  <div>{e.kind === 'b' ? t.purchaseLine(num(e.row.qty), money(e.row.rate)) : t.paymentEntry}{e.row.note && ` · ${e.row.note}`}</div>
+                  <div>{e.kind === 'b' ? purchaseText(e.row) : t.paymentEntry}{e.row.note && ` · ${e.row.note}`}</div>
                   <div className="muted">{t.fmtDate(e.row.date)}</div>
                 </div>
                 <div className="lamt">
@@ -146,14 +151,25 @@ const num = (n) => Math.round(n * 100) / 100;
 // Ids are base-36 creation time + random suffix: a shorter id is older, same length compares as text.
 const byCreation = (a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0);
 
-// Milk bought from `supplier` (new), or edit an existing `purchase`.
+// Stock bought from `supplier` (new), or edit an existing `purchase`. Any product can be bought;
+// the rate starts at what was last paid this supplier for it (the supplier's rate for the main product).
 export function PurchaseBox({ supplier, purchase, onDone }) {
-  const { addPurchase, updatePurchase } = useStore();
+  const { data, addPurchase, updatePurchase } = useStore();
   const t = useT();
-  const { main } = useProducts();
+  const { forSale, byId } = useProducts();
   useBackClose(onDone);
+  const lastRate = (pid) => {
+    const prev = data.purchases.find((b) => b.supplierId === supplier.id && (b.productId || MAIN) === pid);
+    return prev ? prev.rate : pid === MAIN ? supplier.rate : byId(pid)?.price || '';
+  };
+  const [productId, setProductId] = useState(purchase?.productId || MAIN);
+  const product = byId(productId) || forSale[0];
   const [qty, setQty] = useState(purchase ? String(purchase.qty) : '');
-  const [rate, setRate] = useState(String(purchase ? purchase.rate : supplier.rate));
+  const [rate, setRate] = useState(String(purchase ? purchase.rate : lastRate(MAIN)));
+  const pick = (pid) => {
+    setProductId(pid);
+    if (!purchase) setRate(String(lastRate(pid)));
+  };
   const [note, setNote] = useState(purchase?.note || '');
   const [date, setDate] = useState(purchase?.date || today());
   const q = Number(qty) || 0;
@@ -161,7 +177,7 @@ export function PurchaseBox({ supplier, purchase, onDone }) {
   const decimal = (set) => (e) => set(e.target.value.replace(/[^\d.]/g, ''));
 
   const save = () => {
-    const row = { qty: q, rate: r, note: note.trim(), date };
+    const row = { productId: productId === MAIN ? undefined : productId, qty: q, rate: r, note: note.trim(), date };
     if (q > 0 && purchase) updatePurchase(purchase.id, row);
     else if (q > 0) addPurchase(supplier.id, row);
     onDone();
@@ -169,7 +185,17 @@ export function PurchaseBox({ supplier, purchase, onDone }) {
 
   return (
     <div className="card form">
-      <label><Icon name="bottle-droplet" /> {main.name} ({main.unit})</label>
+      {forSale.length > 1 && (
+        <>
+          <label><Icon name="boxes-stacked" /> {t.whatBought}</label>
+          <div className="chips prodchips">
+            {forSale.map((p) => (
+              <button key={p.id} className={`btn ${productId === p.id ? 'primary solid' : ''}`} onClick={() => pick(p.id)}>{p.name}</button>
+            ))}
+          </div>
+        </>
+      )}
+      <label><Icon name="bottle-droplet" /> {product.name} ({product.unit})</label>
       <div className="amount" dir="ltr">
         <button type="button" className="round" onClick={() => setQty(String(Math.max(0, num(q - 1))))}><Icon name="minus" /></button>
         <input className="huge" value={qty} onChange={decimal(setQty)} inputMode="decimal" autoFocus={!purchase} />

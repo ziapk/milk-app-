@@ -168,7 +168,7 @@ const dict = {
     supplierLedger: 'سپلائر کھاتہ',
     addSupplier: 'نیا سپلائر',
     buyRate: 'خرید کا ریٹ (فی لیٹر)',
-    buyMilk: 'دودھ خریدا',
+    buyMilk: 'خریداری',
     qtyLitres: 'دودھ (لیٹر)',
     paySupplier: 'پیسے دیے',
     toPay: 'دینے ہیں',
@@ -199,7 +199,8 @@ const dict = {
     total: 'کل رقم',
     boughtMonth: 'اس مہینے خریدا دودھ',
     paidSuppliersMonth: 'اس مہینے سپلائرز کو دیے',
-    purchaseLine: (q, r) => `${q} لیٹر × ${r} روپے`,
+    purchaseLine: (q, u, n, r) => `${q} ${u} ${n} × ${r} روپے`,
+    whatBought: 'کیا خریدا؟',
     cat: { feed: 'چارہ', fuel: 'پیٹرول', animal: 'جانور', salary: 'تنخواہ', other: 'دیگر' },
     // l = what was delivered, e.g. "60 لیٹر دودھ"
     billText: (c, m, l, a, due) =>
@@ -372,7 +373,7 @@ const dict = {
     supplierLedger: 'Supplier ledger',
     addSupplier: 'Add supplier',
     buyRate: 'Buying rate (per litre)',
-    buyMilk: 'Buy milk',
+    buyMilk: 'Buy stock',
     qtyLitres: 'Milk (litres)',
     paySupplier: 'Pay supplier',
     toPay: 'To pay',
@@ -403,7 +404,8 @@ const dict = {
     total: 'Total',
     boughtMonth: 'Milk bought this month',
     paidSuppliersMonth: 'Paid to suppliers this month',
-    purchaseLine: (q, r) => `${q} L × Rs ${r}`,
+    purchaseLine: (q, u, n, r) => `${q} ${u} ${n} × Rs ${r}`,
+    whatBought: 'What did you buy?',
     cat: { feed: 'Feed', fuel: 'Fuel', animal: 'Animal', salary: 'Salary', other: 'Other' },
     // l = what was delivered, e.g. "60 litre milk"
     billText: (c, m, l, a, due) =>

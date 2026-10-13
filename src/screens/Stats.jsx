@@ -16,7 +16,7 @@ export default function Stats() {
   const collectedMonth = sum(data.payments.filter((p) => p.date.startsWith(month))) + shopPaid((d) => d.startsWith(month));
   const spentMonth = sum(data.expenses.filter((e) => e.date.startsWith(month)));
   const paidSuppliersMonth = sum(data.supplierPayments.filter((p) => p.date.startsWith(month)));
-  const boughtMonth = data.purchases.filter((b) => b.date.startsWith(month)).reduce((s, b) => s + b.qty, 0);
+  const boughtMonth = data.purchases.filter((b) => !b.productId && b.date.startsWith(month)).reduce((s, b) => s + b.qty, 0);
   const owedSuppliers = data.suppliers.reduce((s, sp) => s + Math.max(0, supplierBalance(sp.id)), 0);
   const saving = collectedMonth - spentMonth - paidSuppliersMonth;
   const hasSupply = data.suppliers.length > 0;

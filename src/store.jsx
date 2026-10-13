@@ -15,7 +15,7 @@ const KEY = 'doodh-app-v1';
 // payments:   [{ id, customerId, date, amount }]
 // expenses:   [{ id, date, category, amount, note }]
 // suppliers:        [{ id, name, phone, address, rate, active }]  — people the partner buys milk from
-// purchases:        [{ id, supplierId, date, qty, rate, note }]   — milk bought (several a day is fine)
+// purchases:        [{ id, supplierId, productId?, date, qty, rate, note }] — stock bought (no productId = main product)
 // supplierPayments: [{ id, supplierId, date, amount, note }]      — money paid to a supplier
 // queue:      changes not yet sent to the server, one per row: [{ t: 'c' | 'd' | 'p' | 'e' | 's' | 'b' | 'sp' | 'pr' | 'sa' | 'cfg', row }]
 // cursor:     server time of the last successful sync
@@ -267,7 +267,7 @@ export function StoreProvider({ children }) {
       let amount = 0;
       for (const b of data.purchases) {
         if (b.supplierId !== sid || b.date < from || b.date > to) continue;
-        liters += b.qty;
+        if (!b.productId) liters += b.qty; // quantity of the main product only; amount counts everything
         amount += b.qty * b.rate;
       }
       return { liters, amount };
@@ -359,7 +359,8 @@ export function StoreProvider({ children }) {
           return { ...d, suppliers: d.suppliers.filter((x) => x.id !== id), purchases, supplierPayments, queue };
         }),
 
-      addPurchase: (supplierId, { qty, rate, note = '', date = today() }) => purchaseOps.add({ supplierId, date, qty, rate, note }),
+      addPurchase: (supplierId, { productId, qty, rate, note = '', date = today() }) =>
+        purchaseOps.add({ supplierId, ...(productId && { productId }), date, qty, rate, note }),
       updatePurchase: purchaseOps.update,
       deletePurchase: purchaseOps.remove,
       addSupplierPayment: (supplierId, { amount, note = '', date = today() }) => supplierPayOps.add({ supplierId, date, amount, note }),

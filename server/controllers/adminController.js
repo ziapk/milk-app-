@@ -43,7 +43,7 @@ export const overview = async (req, res) => {
   );
   const [[supply]] = await db.query(
     `SELECT
-       (SELECT COALESCE(SUM(qty), 0) FROM purchases WHERE deleted = 0 AND date >= ${MONTH_START}) AS liters,
+       (SELECT COALESCE(SUM(qty), 0) FROM purchases WHERE deleted = 0 AND product_id = '' AND date >= ${MONTH_START}) AS liters,
        (SELECT COALESCE(SUM(qty * rate), 0) FROM purchases WHERE deleted = 0 AND date >= ${MONTH_START}) AS amount,
        (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE deleted = 0 AND date >= ${MONTH_START}) AS paid,
        (SELECT COALESCE(SUM(qty * rate), 0) FROM purchases WHERE deleted = 0) -
@@ -117,7 +117,7 @@ export const userDetail = async (req, res) => {
   const [[sup]] = await db.execute(
     `SELECT
        (SELECT COUNT(*) FROM suppliers WHERE distributor_id = ? AND deleted = 0) AS suppliers,
-       (SELECT COALESCE(SUM(qty), 0) FROM purchases WHERE distributor_id = ? AND deleted = 0 AND date >= ${MONTH_START}) AS boughtMonth,
+       (SELECT COALESCE(SUM(qty), 0) FROM purchases WHERE distributor_id = ? AND deleted = 0 AND product_id = '' AND date >= ${MONTH_START}) AS boughtMonth,
        (SELECT COALESCE(SUM(qty * rate), 0) FROM purchases WHERE distributor_id = ? AND deleted = 0) -
        (SELECT COALESCE(SUM(amount), 0) FROM supplier_payments WHERE distributor_id = ? AND deleted = 0) AS owedSuppliers`,
     [id, id, id, id],
@@ -322,7 +322,7 @@ export const listSuppliers = async (req, res) => {
      JOIN distributors d ON d.id = s.distributor_id
      LEFT JOIN (
        SELECT distributor_id, supplier_id, MAX(date) AS lastPurchase, SUM(qty * rate) AS amountAll,
-         SUM(IF(date >= ${MONTH_START}, qty, 0)) AS litersMonth,
+         SUM(IF(date >= ${MONTH_START} AND product_id = '', qty, 0)) AS litersMonth,
          SUM(IF(date >= ${MONTH_START}, qty * rate, 0)) AS amountMonth
        FROM purchases WHERE deleted = 0 GROUP BY distributor_id, supplier_id
      ) b ON b.distributor_id = s.distributor_id AND b.supplier_id = s.id
@@ -388,10 +388,13 @@ export const supplierLedger = async (req, res) => {
     [uidNum, sid, from, uidNum, sid, from],
   );
   const [rows] = await db.execute(
-    `SELECT 'buy' AS kind, id, date, qty, rate, qty * rate AS amount, note FROM purchases
-       WHERE distributor_id = ? AND supplier_id = ? AND deleted = 0 AND date >= ? AND date < ? + INTERVAL 1 MONTH
+    `SELECT 'buy' AS kind, b.id, b.date, b.qty, b.rate, b.qty * b.rate AS amount, b.note,
+       p.name AS productName, p.unit AS productUnit
+     FROM purchases b
+     LEFT JOIN products p ON p.distributor_id = b.distributor_id AND p.id = b.product_id AND b.product_id <> ''
+       WHERE b.distributor_id = ? AND b.supplier_id = ? AND b.deleted = 0 AND b.date >= ? AND b.date < ? + INTERVAL 1 MONTH
      UNION ALL
-     SELECT 'pay', id, date, NULL, NULL, -amount, note FROM supplier_payments
+     SELECT 'pay', id, date, NULL, NULL, -amount, note, NULL, NULL FROM supplier_payments
        WHERE distributor_id = ? AND supplier_id = ? AND deleted = 0 AND date >= ? AND date < ? + INTERVAL 1 MONTH
      ORDER BY date, kind, LENGTH(id), id`,
     [uidNum, sid, from, from, uidNum, sid, from, from],

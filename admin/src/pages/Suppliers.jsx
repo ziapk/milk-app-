@@ -222,7 +222,7 @@ function SupplierLedger({ supplier, onClose, onEdit }) {
                     <td>{fmtDate(e.date)}</td>
                     <td>
                       {e.kind === 'buy'
-                        ? <><i className="fa-solid fa-bottle-droplet buy-ico" /> {num(e.qty, 2)} L × {money(e.rate)}</>
+                        ? <><i className="fa-solid fa-bottle-droplet buy-ico" /> {num(e.qty, 2)} {e.productName ? `${e.productUnit} ${e.productName}` : 'L'} × {money(e.rate)}</>
                         : <><i className="fa-solid fa-money-bill-wave pay-ico" /> Payment</>}
                       {e.note && <span className="muted"> · {e.note}</span>}
                     </td>

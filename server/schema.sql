@@ -134,6 +134,7 @@ CREATE TABLE IF NOT EXISTS purchases (
   distributor_id INT NOT NULL,
   id VARCHAR(24) NOT NULL,
   supplier_id VARCHAR(24) NOT NULL,
+  product_id VARCHAR(24) NOT NULL DEFAULT '', -- '' = the main product
   date DATE NOT NULL,
   qty DECIMAL(8,2) NOT NULL DEFAULT 0,
   rate DECIMAL(10,2) NOT NULL DEFAULT 0,

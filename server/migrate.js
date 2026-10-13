@@ -53,6 +53,11 @@ export async function migrate() {
     await db.query(`ALTER TABLE deliveries DROP PRIMARY KEY, ADD PRIMARY KEY (distributor_id, customer_id, date, product_id)`);
     console.log("migrate: added deliveries.product_id");
   }
+  if (!(await hasColumn("purchases", "product_id"))) {
+    // '' = the main product (all purchases before this were of the main product).
+    await db.query(`ALTER TABLE purchases ADD COLUMN product_id VARCHAR(24) NOT NULL DEFAULT '' AFTER supplier_id`);
+    console.log("migrate: added purchases.product_id");
+  }
   await db.query(`CREATE TABLE IF NOT EXISTS products (
   distributor_id INT NOT NULL,
   id VARCHAR(24) NOT NULL,
