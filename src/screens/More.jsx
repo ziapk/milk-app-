@@ -5,9 +5,13 @@ import Icon from '../Icon';
 import { useBackClose } from '../back';
 import { URDU_FONTS } from '../fonts';
 import { canOpenVoiceSettings, openVoiceSettings, voiceLanguage } from '../search';
+import Products from './Products';
+import { useProducts } from '../products';
 
 export default function More() {
-  const { data, setLang, setUrduFont, logout, logoutOthers, deleteAccount, sync, syncState } = useStore();
+  const { data, setLang, setUrduFont, logout, logoutOthers, deleteAccount, sync, syncState, saveSettings } = useStore();
+  const { main, extras } = useProducts();
+  const [productsOpen, setProductsOpen] = useState(false);
   const t = useT();
   const pending = data.queue.length;
   const [note, setNote] = useState('');
@@ -38,9 +42,33 @@ export default function More() {
     }
   };
 
+  if (productsOpen) return <Products onBack={() => setProductsOpen(false)} />;
+
+  const modes = data.settings;
+  // At least one of delivery / shop stays on.
+  const toggle = (k) => {
+    if (modes[k] && !(k === 'delivery' ? modes.shop : modes.delivery)) return setNote(t.needOneMode);
+    setNote('');
+    saveSettings({ [k]: !modes[k] });
+  };
+
   return (
     <>
       <h1><Icon name="gear" /> {t.settings}</h1>
+      <div className="card form">
+        <div className="name"><Icon name="briefcase" /> {t.business}</div>
+        <div className="muted">{t.businessHelp}</div>
+        {[['delivery', 'motorcycle', t.homeDelivery, t.homeDeliveryHelp], ['shop', 'store', t.shop, t.shopHelp]].map(([k, icon, label, help]) => (
+          <button key={k} role="switch" aria-checked={!!modes[k]} className={`modeswitch ${modes[k] ? 'on' : ''}`} onClick={() => toggle(k)}>
+            <Icon name={icon} />
+            <span className="grow"><b>{label}</b><small>{help}</small></span>
+            <span className="track"><span className="knob" /></span>
+          </button>
+        ))}
+        <button className="btn wide" onClick={() => setProductsOpen(true)}>
+          <Icon name="boxes-stacked" /> {t.products}: {main.name} ({main.unit}){extras.length ? ` + ${extras.length}` : ''}
+        </button>
+      </div>
       <div className="card form">
         <div className="name"><Icon name="circle-user" /> {data.auth.name}</div>
         <div className="muted" dir="ltr">{data.auth.phone}</div>

@@ -9,13 +9,15 @@ import More from './screens/More';
 import Login from './screens/Login';
 import Stats from './screens/Stats';
 import Suppliers from './screens/Suppliers';
+import Shop from './screens/Shop';
 import Icon from './Icon';
 import QuickAdd, { Fab } from './screens/QuickAdd';
 
 // Daily-use screens sit in the bottom bar. The logo opens the summary dashboard and the
 // gear opens settings.
 const TABS = [
-  ['today', 'delivery', null],
+  ['today', 'delivery', null, 'delivery'],
+  ['shop', 'shop', 'store', 'shop'],
   ['customers', 'customers', 'users'],
   ['payments', 'payments', 'money-bill-wave'],
   ['suppliers', 'suppliers', 'truck'],
@@ -43,14 +45,19 @@ export default function App() {
 
   if (!data.auth) return <Login />;
 
+  // Delivery and Shop tabs only show when that business mode is on (Settings > Business).
+  const tabs = TABS.filter(([, , , mode]) => !mode || data.settings[mode]);
+  const current = tab === 'today' && !data.settings.delivery ? (data.settings.shop ? 'shop' : 'customers') : tab === 'shop' && !data.settings.shop ? 'today' : tab;
+
   let screen;
   if (create) screen = <QuickAdd key={create} action={create} onDone={() => setCreate(null)} onSwitch={setCreate} />;
   else if (openCustomer) screen = <CustomerDetail id={openCustomer} onBack={() => setOpenCustomer(null)} />;
-  else if (tab === 'today') screen = <Today />;
-  else if (tab === 'customers') screen = <Customers onOpen={setOpenCustomer} />;
-  else if (tab === 'payments') screen = <Payments onOpenSuppliers={() => go('suppliers')} />;
-  else if (tab === 'stats') screen = <Stats />;
-  else if (tab === 'suppliers') screen = <Suppliers />;
+  else if (current === 'today') screen = <Today />;
+  else if (current === 'shop') screen = <Shop onNewSale={() => setCreate('sale')} />;
+  else if (current === 'customers') screen = <Customers onOpen={setOpenCustomer} />;
+  else if (current === 'payments') screen = <Payments onOpenSuppliers={() => go('suppliers')} />;
+  else if (current === 'stats') screen = <Stats />;
+  else if (current === 'suppliers') screen = <Suppliers />;
   else screen = <More />;
 
   return (
@@ -75,8 +82,8 @@ export default function App() {
       <main>{screen}</main>
       {!create && <Fab onPick={setCreate} />}
       <nav className="tabs">
-        {TABS.map(([k, label, icon]) => (
-          <button key={k} className={tab === k && !openCustomer ? 'on' : ''} onClick={() => go(k)}>
+        {tabs.map(([k, label, icon]) => (
+          <button key={k} className={current === k && !openCustomer ? 'on' : ''} onClick={() => go(k)}>
             <span className="ico">{icon ? <Icon name={icon} /> : <img className="tablogo" src="/logo.png" alt="" />}</span>
             {t[label]}
           </button>

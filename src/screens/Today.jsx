@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useStore, today, addDays } from "../store";
+import { useStore, today, addDays, hasUsual } from "../store";
+import { useProducts } from "../products";
+import { stepOf } from "./Shop";
 import { useT, money } from "../i18n";
 import Icon from "../Icon";
 import SearchBar from "./SearchBar";
@@ -11,7 +13,8 @@ import { filterCustomers } from "../search";
 const STEP = 0.5;
 
 export default function Today() {
-  const { data, setDelivery, markAll, balance } = useStore();
+  const { data, setDelivery, setExtra, giveUsual, markAll, balance } = useStore();
+  const { main, byId } = useProducts();
   const t = useT();
   const [date, setDate] = useState(today());
   const [query, setQuery] = useState("");
@@ -24,9 +27,23 @@ export default function Today() {
   const totalLiters = Object.values(day).reduce((s, d) => s + d.qty, 0);
   const marked = list.filter((c) => day[c.id]).length;
   const shown = filterCustomers(list, query);
-  const unmarked = list.filter((c) => !day[c.id] && c.defaultQty > 0).length;
+  const unmarked = list.filter((c) => !day[c.id] && hasUsual(c, data.products)).length;
   const doMarkAll = () => confirm(t.markAllConfirm(unmarked)) && markAll(date);
   const label = t.fmtDate(date);
+
+  // Extra products to show on a customer's card: what they usually take, plus anything entered today.
+  const extrasFor = (c, entry) => {
+    const ids = [...new Set([...(c.items || []).map((i) => i.productId), ...Object.keys(entry?.x || {})])];
+    return ids
+      .map((productId) => {
+        const p = byId(productId);
+        const usual = (c.items || []).find((i) => i.productId === productId);
+        if (!p || (p.active === false && !entry?.x?.[productId])) return null;
+        const xq = entry ? entry.x?.[productId]?.qty ?? 0 : usual?.qty ?? 0;
+        return { productId, qty: xq, p };
+      })
+      .filter(Boolean);
+  };
 
   if (billFor) return <CustomerBill id={billFor} initialMonth={date.slice(0, 7)} onClose={() => setBillFor(null)} />;
 
@@ -55,7 +72,7 @@ export default function Today() {
             <Icon name="check-double" /> <b>{marked}</b>/{list.length}
           </span>
           <span>
-            <Icon name="bottle-droplet" /> <b>{totalLiters}</b> {t.liters}
+            <Icon name="bottle-droplet" /> <b>{totalLiters}</b> {main.unit}
           </span>
         </div>
         <div className="bar">
@@ -84,7 +101,8 @@ export default function Today() {
       {shown.map((c) => {
         const entry = day[c.id];
         const qty = entry ? entry.qty : c.defaultQty;
-        const state = !entry ? "pending" : entry.qty > 0 ? "done" : "skipped";
+        const given = entry && (entry.qty > 0 || Object.values(entry.x || {}).some((e) => e.qty > 0));
+        const state = !entry ? "pending" : given ? "done" : "skipped";
         const due = Math.round(balance(c.id));
         if (paying === c.id)
           return (
@@ -105,13 +123,27 @@ export default function Today() {
                   <Icon name="minus" />
                 </button>
                 <span className="num">
-                  {qty} <small>{t.liters}</small>
+                  {qty} <small>{main.unit}</small>
                 </span>
                 <button aria-label="+" onClick={() => setDelivery(date, c.id, qty + STEP)}>
                   <Icon name="plus" />
                 </button>
               </div>
             </div>
+            {extrasFor(c, entry).map(({ productId, qty: xq, p }) => (
+              <div key={productId} className="extraline">
+                <span className="grow">{p.name}</span>
+                <div className="stepper small">
+                  <button aria-label="-" onClick={() => setExtra(date, c.id, productId, Math.max(0, xq - stepOf(p)))}>
+                    <Icon name="minus" />
+                  </button>
+                  <span className="num">{xq} <small>{p.unit}</small></span>
+                  <button aria-label="+" onClick={() => setExtra(date, c.id, productId, xq + stepOf(p))}>
+                    <Icon name="plus" />
+                  </button>
+                </div>
+              </div>
+            ))}
             <div className="cardfoot">
               <button className="paypill bill" aria-label={t.monthBill} onClick={() => setBillFor(c.id)}>
                 <Icon name="file-invoice" />
@@ -134,9 +166,7 @@ export default function Today() {
               <button
                 className={`mark give ${state === "done" ? "on" : ""}`}
                 aria-label={t.done}
-                onClick={() =>
-                  setDelivery(date, c.id, state === "done" ? null : qty || c.defaultQty)
-                }
+                onClick={() => (state === "done" ? setDelivery(date, c.id, null) : giveUsual(date, c.id))}
               >
                 <Icon name="check" />
               </button>

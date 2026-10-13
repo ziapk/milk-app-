@@ -34,7 +34,8 @@ export const overview = async (req, res) => {
     `SELECT COUNT(*) AS customers FROM customers WHERE deleted = 0 AND active = 1`,
   );
   const [[month]] = await db.query(
-    `SELECT COALESCE(SUM(qty), 0) AS liters, COALESCE(SUM(qty * rate), 0) AS sales
+    // Quantity counts the main product only (product_id ''); amounts include every product.
+    `SELECT COALESCE(SUM(IF(product_id = '', qty, 0)), 0) AS liters, COALESCE(SUM(qty * rate), 0) AS sales
      FROM deliveries WHERE deleted = 0 AND date >= ${MONTH_START}`,
   );
   const [[{ collected }]] = await db.query(
@@ -51,14 +52,14 @@ export const overview = async (req, res) => {
   );
   const liters = await dailySeries(
     `SELECT date AS day, SUM(qty) AS value FROM deliveries
-     WHERE deleted = 0 AND date > CURDATE() - INTERVAL ${DAYS} DAY GROUP BY date`,
+     WHERE deleted = 0 AND product_id = '' AND date > CURDATE() - INTERVAL ${DAYS} DAY GROUP BY date`,
   );
   const signups = await dailySeries(
     `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day, COUNT(*) AS value FROM distributors
      WHERE created_at >= CURDATE() - INTERVAL ${DAYS - 1} DAY GROUP BY day`,
   );
   const [top] = await db.query(
-    `SELECT d.id, d.name, d.phone, SUM(x.qty) AS liters, SUM(x.qty * x.rate) AS sales
+    `SELECT d.id, d.name, d.phone, SUM(IF(x.product_id = '', x.qty, 0)) AS liters, SUM(x.qty * x.rate) AS sales
      FROM deliveries x JOIN distributors d ON d.id = x.distributor_id
      WHERE x.deleted = 0 AND x.date >= ${MONTH_START}
      GROUP BY d.id ORDER BY liters DESC LIMIT 5`,
@@ -96,7 +97,7 @@ export const userDetail = async (req, res) => {
   );
   const [[d]] = await db.execute(
     `SELECT COALESCE(SUM(qty * rate), 0) AS salesAll,
-       COALESCE(SUM(IF(date >= ${MONTH_START}, qty, 0)), 0) AS litersMonth,
+       COALESCE(SUM(IF(date >= ${MONTH_START} AND product_id = '', qty, 0)), 0) AS litersMonth,
        COALESCE(SUM(IF(date >= ${MONTH_START}, qty * rate, 0)), 0) AS salesMonth,
        MAX(date) AS lastDelivery
      FROM deliveries WHERE distributor_id = ? AND deleted = 0`,
@@ -253,7 +254,7 @@ export const listCustomers = async (req, res) => {
      JOIN distributors d ON d.id = c.distributor_id
      LEFT JOIN (
        SELECT distributor_id, customer_id, MAX(date) AS lastDelivery, SUM(qty * rate) AS salesAll,
-         SUM(IF(date >= ${MONTH_START}, qty, 0)) AS litersMonth
+         SUM(IF(date >= ${MONTH_START} AND product_id = '', qty, 0)) AS litersMonth
        FROM deliveries WHERE deleted = 0 GROUP BY distributor_id, customer_id
      ) x ON x.distributor_id = c.distributor_id AND x.customer_id = c.id
      LEFT JOIN (

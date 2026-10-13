@@ -365,3 +365,49 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 .pickrow { width: 100%; font: inherit; color: inherit; text-align: start; }
 .arrow.ghost { visibility: hidden; }
 .name.center { text-align: center; }
+
+/* Products: extra daily products on the customer form */
+.extras { border: 2px dashed var(--line); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.extras-title { font-weight: 700; color: var(--muted); }
+.extra-row { display: grid; grid-template-columns: 1fr 82px 82px auto; gap: 8px; align-items: end; }
+.extra-row label { display: flex; flex-direction: column; gap: 2px; }
+.extra-row input { padding: 8px; font-size: 18px; }
+.extra-name { font-weight: 700; align-self: center; }
+.addextra { padding: 10px; border: 2px solid var(--line); border-radius: 12px; background: #fff; font: inherit; color: var(--primary); font-weight: 700; }
+
+/* Delivery card: one line per extra product */
+.extraline { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); font-weight: 600; }
+.stepper.small button { width: 34px; height: 34px; font-size: 14px; }
+.stepper.small .num { font-size: 18px; min-width: 64px; }
+
+/* Shop: product tiles and cart */
+.prodgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin: 8px 0; }
+.prodtile {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 78px; padding: 8px; border: 2px solid var(--line); border-radius: 14px; background: #fff; font: inherit; color: inherit;
+}
+.prodtile b { font-size: 17px; }
+.prodtile small { color: var(--muted); font-size: 13px; }
+.prodtile.on { border-color: var(--primary); background: var(--primary-soft); }
+.prodtile .count { position: absolute; top: -6px; inset-inline-end: -6px; min-width: 24px; height: 24px; border-radius: 12px; background: var(--primary); color: #fff; font: 700 13px/24px system-ui, sans-serif; font-style: normal; text-align: center; padding: 0 6px; }
+.cartline { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.cartline .name { font-size: 17px; }
+.cartline .rate { width: 70px; padding: 8px; border: 2px solid var(--line); border-radius: 10px; font-size: 16px; text-align: center; }
+.catico.prod { color: var(--primary); }
+.btn.big { min-height: 56px; font-size: 20px; }
+
+/* Settings: business mode switches */
+.modeswitch { display: flex; align-items: center; gap: 12px; width: 100%; text-align: start; padding: 10px 12px; border: 2px solid var(--line); border-radius: 14px; background: #fff; font: inherit; color: inherit; }
+.modeswitch > .fa-solid { font-size: 22px; width: 28px; color: var(--muted); }
+.modeswitch .grow { display: flex; flex-direction: column; }
+.modeswitch small { color: var(--muted); font-size: 13px; }
+.modeswitch .track { position: relative; width: 40px; height: 24px; border-radius: 12px; background: #cbd5e1; flex: none; transition: background 0.15s; }
+.modeswitch .knob { position: absolute; top: 3px; inset-inline-start: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px #0003; transition: inset-inline-start 0.15s; }
+.modeswitch.on { border-color: var(--primary); background: var(--primary-soft); }
+.modeswitch.on > .fa-solid { color: var(--primary); }
+.modeswitch.on .track { background: var(--primary); }
+.modeswitch.on .knob { inset-inline-start: 19px; }
+.daycard .extraline, .daycard .cardfoot { width: 100%; }
+.form .cartline .grow { min-width: 0; }
+.form .cartline input.rate { width: 72px; flex: none; padding: 8px 4px; font-size: 16px; text-align: center; }
+.form select { width: 100%; padding: 12px; border: 2px solid var(--line); border-radius: 12px; font: inherit; font-size: 18px; background: #fff; color: inherit; }

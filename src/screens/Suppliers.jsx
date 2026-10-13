@@ -4,11 +4,13 @@ import { useT, money } from '../i18n';
 import Icon from '../Icon';
 import SupplierForm from './SupplierForm';
 import SupplierLedger from './SupplierLedger';
+import { useProducts } from '../products';
 
 // Supplier ledger: everyone the partner buys milk from, with what is still owed to each.
 export default function Suppliers() {
   const { data, supplierBalance } = useStore();
   const t = useT();
+  const { main } = useProducts();
   const [adding, setAdding] = useState(false);
   const [open, setOpen] = useState(null);
 
@@ -40,7 +42,7 @@ export default function Suppliers() {
             <div className="grow">
               <div className="name">{sp.name}</div>
               <div className="muted">
-                {t.rs} {sp.rate} / {t.liters}
+                {t.rs} {sp.rate} / {main.unit}
                 {!sp.active && ` · ${t.inactive}`}
               </div>
             </div>

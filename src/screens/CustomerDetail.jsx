@@ -8,10 +8,12 @@ import Icon from '../Icon';
 import { useBackClose } from '../back';
 import CustomerBill, { shiftMonth } from './CustomerBill';
 import ActiveSwitch from './ActiveSwitch';
+import { useProducts } from '../products';
 
 export default function CustomerDetail({ id, onBack }) {
   const store = useStore();
-  const { data, billed, paid, balance, deleteCustomer } = store;
+  const { data, billed, paid, salesOwed, balance, deleteCustomer } = store;
+  const { main } = useProducts();
   const t = useT();
   const c = store.customerById(id);
   const [month, setMonth] = useState(today().slice(0, 7));
@@ -23,7 +25,8 @@ export default function CustomerDetail({ id, onBack }) {
 
   const from = month + '-01';
   const to = month + '-31';
-  const m = billed(id, from, to);
+  const delivered = billed(id, from, to);
+  const m = { liters: delivered.liters, amount: delivered.amount + salesOwed(id, from, to) };
   const mPaid = paid(id, from, to);
   const bal = balance(id);
   const days = Object.keys(data.deliveries)
@@ -60,7 +63,7 @@ export default function CustomerDetail({ id, onBack }) {
       </header>
 
       <div className="stats">
-        <div className="stat primary"><small><Icon name="bottle-droplet" /> {t.liters}</small><b>{m.liters}</b></div>
+        <div className="stat primary"><small><Icon name="bottle-droplet" /> {main.unit}</small><b>{m.liters}</b></div>
         <div className="stat"><small><Icon name="file-invoice" /> {t.bill}</small><b>{money(m.amount)}</b></div>
         <div className="stat green"><small><Icon name="money-bill-wave" /></small><b>{money(mPaid)}</b></div>
       </div>

@@ -79,26 +79,29 @@ async function drawSheet({ t, lang, font, seller, title, subtitle, columns, rows
   return canvas;
 }
 
-// rows: [{ label, qty, rate }] — one per day the customer was marked.
-export function drawBill({ t, lang, font, seller, customer, monthName, rows, totals }) {
+// rows: [{ label, qty, rate, unit? }] — one per product per day the customer was marked; a row with
+// `text` (a shop purchase) shows that text and `amount` instead. main: { name, unit }.
+export function drawBill({ t, lang, font, seller, customer, monthName, rows, totals, main }) {
   const skip = '#d93b3b';
   return drawSheet({
     t, lang, font, seller,
     title: customer.name,
     subtitle: `${t.bill} · ${monthName}`,
     columns: [
-      { label: t.date, x: PAD + 16 },
-      { label: t.liters, x: PAD + 300, bold: true },
-      { label: t.rateShort, x: PAD + 520, color: '#6b7686' },
+      { label: t.date, x: PAD + 16, width: 300 },
+      { label: t.qtyShort, x: PAD + 340, bold: true, width: 180 },
+      { label: t.rateShort, x: PAD + 540, color: '#6b7686' },
       { label: t.amount, x: W - PAD - 16, align: 'end', bold: true },
     ],
     rows: rows.map((r) =>
-      r.qty === 0
-        ? { cells: [r.label, '—', '', ''], color: skip }
-        : { cells: [r.label, r.qty, money(r.rate), money(r.qty * r.rate)] },
+      r.text
+        ? { cells: [r.label, r.text, '', money(r.amount)] }
+        : r.qty === 0
+          ? { cells: [r.label, '—', '', ''], color: skip }
+          : { cells: [r.label, `${r.qty} ${r.unit || main.unit}`, money(r.rate), money(r.qty * r.rate)] },
     ),
     totals: [
-      { label: t.totalMilk, value: `${totals.liters} ${t.liters}` },
+      { label: main.name, value: `${totals.liters} ${main.unit}` },
       { label: t.bill, value: `${t.rs} ${money(totals.amount)}` },
       { label: t.paidMonth, value: `${t.rs} ${money(totals.paid)}`, color: '#1a9e55' },
       {
@@ -128,8 +131,8 @@ export function drawExpenses({ t, lang, font, seller, monthName, rows, total }) 
   });
 }
 
-// rows: [{ name, liters, amount, paid, due }] — one per customer active that month.
-export function drawReport({ t, lang, font, seller, monthName, rows, totals }) {
+// rows: [{ name, liters, amount, paid, due }] — one per customer active that month. main: { name, unit }.
+export function drawReport({ t, lang, font, seller, monthName, rows, totals, main }) {
   const red = '#d93b3b';
   const green = '#1a9e55';
   return drawSheet({
@@ -138,7 +141,7 @@ export function drawReport({ t, lang, font, seller, monthName, rows, totals }) {
     subtitle: `${monthName} · ${rows.length} ${t.customers}`,
     columns: [
       { label: t.name, x: PAD + 16, width: 300 },
-      { label: t.liters, x: PAD + 340, bold: true },
+      { label: main.unit, x: PAD + 340, bold: true, width: 120 },
       { label: t.bill, x: PAD + 470 },
       { label: t.paidShort, x: PAD + 640, color: green },
       { label: t.due, x: W - PAD - 16, align: 'end', bold: true },
@@ -147,7 +150,7 @@ export function drawReport({ t, lang, font, seller, monthName, rows, totals }) {
       cells: [r.name, r.liters, money(r.amount), money(r.paid), money(r.due)],
     })),
     totals: [
-      { label: t.totalMilk, value: `${totals.liters} ${t.liters}` },
+      { label: main.name, value: `${totals.liters} ${main.unit}` },
       { label: t.bill, value: `${t.rs} ${money(totals.amount)}` },
       { label: t.collectedMonth, value: `${t.rs} ${money(totals.paid)}`, color: green },
       { label: t.totalDue, value: `${t.rs} ${money(totals.due)}`, color: totals.due > 0 ? red : green, big: true },

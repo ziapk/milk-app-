@@ -7,6 +7,7 @@ import { shiftMonth } from './CustomerBill';
 import { SupplierBalance } from './Suppliers';
 import SupplierForm from './SupplierForm';
 import AmountInput from './AmountInput';
+import { useProducts } from '../products';
 
 // One supplier's ledger for a month: opening balance, every purchase and payment with a running
 // balance, and the balance at the end. Positive balance = still owed to the supplier.
@@ -14,6 +15,7 @@ export default function SupplierLedger({ id, onBack }) {
   const store = useStore();
   const { data, bought, paidSupplier, supplierBalance, deletePurchase, deleteSupplierPayment, deleteSupplier } = store;
   const t = useT();
+  const { main } = useProducts();
   const sp = store.supplierById(id);
   const [month, setMonth] = useState(today().slice(0, 7));
   const [mode, setMode] = useState(null); // 'edit' | 'buy' | 'pay'
@@ -55,7 +57,7 @@ export default function SupplierLedger({ id, onBack }) {
         <SupplierBalance amount={supplierBalance(id)} />
         {sp.address && <div className="muted"><Icon name="house" /> {sp.address}</div>}
         {sp.phone && <a className="linkbtn primary" href={`tel:${sp.phone}`} dir="ltr"><Icon name="phone" /> {sp.phone}</a>}
-        <div className="muted">{t.rs} {sp.rate} / {t.liters}{!sp.active && ` · ${t.inactive}`}</div>
+        <div className="muted">{t.rs} {sp.rate} / {main.unit}{!sp.active && ` · ${t.inactive}`}</div>
       </div>
 
       {mode === 'buy' ? (
@@ -76,7 +78,7 @@ export default function SupplierLedger({ id, onBack }) {
       </header>
 
       <div className="stats">
-        <div className="stat primary"><small><Icon name="bottle-droplet" /> {t.liters}</small><b>{num(m.liters)}</b></div>
+        <div className="stat primary"><small><Icon name="bottle-droplet" /> {main.unit}</small><b>{num(m.liters)}</b></div>
         <div className="stat"><small><Icon name="file-invoice" /> {t.milkBought}</small><b>{money(m.amount)}</b></div>
         <div className="stat green"><small><Icon name="money-bill-wave" /> {t.paidShortSupplier}</small><b>{money(mPaid)}</b></div>
       </div>
@@ -148,6 +150,7 @@ const byCreation = (a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0)
 export function PurchaseBox({ supplier, purchase, onDone }) {
   const { addPurchase, updatePurchase } = useStore();
   const t = useT();
+  const { main } = useProducts();
   useBackClose(onDone);
   const [qty, setQty] = useState(purchase ? String(purchase.qty) : '');
   const [rate, setRate] = useState(String(purchase ? purchase.rate : supplier.rate));
@@ -166,7 +169,7 @@ export function PurchaseBox({ supplier, purchase, onDone }) {
 
   return (
     <div className="card form">
-      <label><Icon name="bottle-droplet" /> {t.qtyLitres}</label>
+      <label><Icon name="bottle-droplet" /> {main.name} ({main.unit})</label>
       <div className="amount" dir="ltr">
         <button type="button" className="round" onClick={() => setQty(String(Math.max(0, num(q - 1))))}><Icon name="minus" /></button>
         <input className="huge" value={qty} onChange={decimal(setQty)} inputMode="decimal" autoFocus={!purchase} />

@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS distributors (
   locked_until DATETIME NULL,
   disabled TINYINT(1) NOT NULL DEFAULT 0,
   last_seen_at DATETIME NULL,
+  settings TEXT NULL,
+  settings_updated_at TIMESTAMP(3) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -31,6 +33,7 @@ CREATE TABLE IF NOT EXISTS customers (
   address VARCHAR(255) NOT NULL DEFAULT '',
   rate DECIMAL(10,2) NOT NULL DEFAULT 0,
   default_qty DECIMAL(6,2) NOT NULL DEFAULT 0,
+  items TEXT NULL,
   active TINYINT(1) NOT NULL DEFAULT 1,
   deleted TINYINT(1) NOT NULL DEFAULT 0,
   updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -42,12 +45,13 @@ CREATE TABLE IF NOT EXISTS customers (
 CREATE TABLE IF NOT EXISTS deliveries (
   distributor_id INT NOT NULL,
   customer_id VARCHAR(24) NOT NULL,
+  product_id VARCHAR(24) NOT NULL DEFAULT '', -- '' = the main product
   date DATE NOT NULL,
   qty DECIMAL(6,2) NOT NULL DEFAULT 0,
   rate DECIMAL(10,2) NOT NULL DEFAULT 0,
   deleted TINYINT(1) NOT NULL DEFAULT 0,
   updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (distributor_id, customer_id, date),
+  PRIMARY KEY (distributor_id, customer_id, date, product_id),
   KEY idx_deliveries_sync (distributor_id, updated_at),
   FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
 );
@@ -76,6 +80,37 @@ CREATE TABLE IF NOT EXISTS expenses (
   updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (distributor_id, id),
   KEY idx_expenses_sync (distributor_id, updated_at),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+);
+
+-- Product catalogue and shop (counter) sales; items is a JSON list of { productId, name, unit, qty, rate }.
+CREATE TABLE IF NOT EXISTS products (
+  distributor_id INT NOT NULL,
+  id VARCHAR(24) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  unit VARCHAR(30) NOT NULL DEFAULT '',
+  price DECIMAL(10,2) NOT NULL DEFAULT 0,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  deleted TINYINT(1) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (distributor_id, id),
+  KEY idx_products_sync (distributor_id, updated_at),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS sales (
+  distributor_id INT NOT NULL,
+  id VARCHAR(24) NOT NULL,
+  customer_id VARCHAR(24) NOT NULL DEFAULT '',
+  date DATE NOT NULL,
+  items TEXT NOT NULL,
+  total DECIMAL(12,2) NOT NULL DEFAULT 0,
+  paid DECIMAL(12,2) NOT NULL DEFAULT 0,
+  note VARCHAR(255) NOT NULL DEFAULT '',
+  deleted TINYINT(1) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (distributor_id, id),
+  KEY idx_sales_sync (distributor_id, updated_at),
   FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
 );
 

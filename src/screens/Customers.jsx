@@ -9,9 +9,11 @@ import { filterCustomers } from '../search';
 import MonthlyReport from './MonthlyReport';
 import CustomerBill from './CustomerBill';
 import ActiveSwitch from './ActiveSwitch';
+import { useProducts } from '../products';
 
 export default function Customers({ onOpen }) {
   const { data, balance, deleteCustomer } = useStore();
+  const { main, byId } = useProducts();
   const t = useT();
   const [adding, setAdding] = useState(false);
   const [paying, setPaying] = useState(null);
@@ -56,7 +58,8 @@ export default function Customers({ onOpen }) {
               <div className="grow">
                 <div className="name">{c.name}</div>
                 <div className="muted">
-                  {c.defaultQty} {t.liters} · {t.rs} {c.rate}
+                  {c.defaultQty} {main.unit} · {t.rs} {c.rate}
+                  {(c.items || []).filter((i) => byId(i.productId)).map((i) => ` + ${byId(i.productId).name}`).join('')}
                   {!c.active && ` · ${t.inactive}`}
                 </div>
               </div>

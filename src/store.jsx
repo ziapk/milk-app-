@@ -4,20 +4,29 @@ import { api } from './api';
 const KEY = 'doodh-app-v1';
 
 // Shape:
-// customers:  [{ id, name, phone, address, rate, defaultQty, active }]
-// deliveries: { 'YYYY-MM-DD': { [customerId]: { qty, rate } } }  — rate copied at delivery time so price changes don't rewrite history
+// settings:   { delivery, shop, mainName, mainUnit, mainPrice } — which modes are on, and the main product
+// products:   [{ id, name, unit, price, active }]  — extra products (the main product lives in settings)
+// customers:  [{ id, name, phone, address, rate, defaultQty, items, active }]
+//             rate/defaultQty are for the main product; items: [{ productId, qty, rate }] are extra daily products
+// deliveries: { 'YYYY-MM-DD': { [customerId]: { qty, rate, x?: { [productId]: { qty, rate } } } } }
+//             qty/rate = main product, x = extra products; rates are copied so price changes don't rewrite history
+// sales:      [{ id, date, customerId | null, items: [{ productId, name, unit, qty, rate }], total, paid, note }]
+//             shop counter sales; customerId null = walk-in. total - paid goes on the customer's balance
 // payments:   [{ id, customerId, date, amount }]
 // expenses:   [{ id, date, category, amount, note }]
 // suppliers:        [{ id, name, phone, address, rate, active }]  — people the partner buys milk from
 // purchases:        [{ id, supplierId, date, qty, rate, note }]   — milk bought (several a day is fine)
 // supplierPayments: [{ id, supplierId, date, amount, note }]      — money paid to a supplier
-// queue:      changes not yet sent to the server, one per row: [{ t: 'c' | 'd' | 'p' | 'e' | 's' | 'b' | 'sp', row }]
+// queue:      changes not yet sent to the server, one per row: [{ t: 'c' | 'd' | 'p' | 'e' | 's' | 'b' | 'sp' | 'pr' | 'sa' | 'cfg', row }]
 // cursor:     server time of the last successful sync
-const empty = { customers: [], deliveries: {}, payments: [], expenses: [], suppliers: [], purchases: [], supplierPayments: [], lang: 'ur', urduFont: 'nastaliq', auth: null, queue: [], cursor: null };
+export const MAIN = 'main'; // product id used for the main product in sales and pickers
+const defaultSettings = { delivery: true, shop: false, mainName: '', mainUnit: '', mainPrice: 0 };
+const empty = { settings: defaultSettings, products: [], sales: [], customers: [], deliveries: {}, payments: [], expenses: [], suppliers: [], purchases: [], supplierPayments: [], lang: 'ur', urduFont: 'nastaliq', auth: null, queue: [], cursor: null };
 
 function load() {
   try {
-    return { ...empty, ...JSON.parse(localStorage.getItem(KEY)) };
+    const saved = JSON.parse(localStorage.getItem(KEY));
+    return { ...empty, ...saved, settings: { ...defaultSettings, ...saved?.settings } };
   } catch {
     return empty;
   }
@@ -42,7 +51,30 @@ export const addDays = (iso, n) => {
 };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-const keyOf = ({ t, row }) => (t === 'd' ? `d:${row.customerId}|${row.date}` : `${t}:${row.id}`);
+const keyOf = ({ t, row }) =>
+  t === 'd' ? `d:${row.customerId}|${row.date}|${row.productId || ''}` : t === 'cfg' ? 'cfg' : `${t}:${row.id}`;
+
+// One delivery entry as server rows: the main product, then each extra product.
+const deliveryRows = (customerId, date, v, deleted = false) => [
+  { customerId, date, qty: v.qty, rate: v.rate, ...(deleted && { deleted: true }) },
+  ...Object.entries(v.x || {}).map(([productId, e]) => ({ customerId, productId, date, qty: e.qty, rate: e.rate, ...(deleted && { deleted: true }) })),
+];
+const sumX = (v, f) => Object.values(v?.x || {}).reduce((s, e) => s + f(e), 0);
+
+// What a customer usually gets: their main quantity plus each extra product that is still active.
+const usual = (c, products) => {
+  const x = {};
+  for (const i of c.items || []) {
+    const p = products.find((pr) => pr.id === i.productId);
+    if (p && p.active !== false && i.qty > 0) x[i.productId] = { qty: i.qty, rate: i.rate };
+  }
+  return { qty: c.defaultQty, rate: c.rate, ...(Object.keys(x).length && { x }) };
+};
+export const hasUsual = (c, products) => {
+  const u = usual(c, products);
+  return u.qty > 0 || sumX(u, (e) => e.qty) > 0;
+};
+const saleTotal = (items) => items.reduce((s, i) => s + i.qty * i.rate, 0);
 
 // Newer change to the same row replaces the older one, so the queue stays small.
 const enqueue = (queue, item) => [...queue.filter((q) => keyOf(q) !== keyOf(item)), item];
@@ -51,12 +83,16 @@ function queueEverything(d) {
   let queue = d.queue;
   for (const c of d.customers) queue = enqueue(queue, { t: 'c', row: c });
   for (const [date, day] of Object.entries(d.deliveries))
-    for (const [customerId, v] of Object.entries(day)) queue = enqueue(queue, { t: 'd', row: { customerId, date, ...v } });
+    for (const [customerId, v] of Object.entries(day))
+      for (const row of deliveryRows(customerId, date, v)) queue = enqueue(queue, { t: 'd', row });
   for (const p of d.payments) queue = enqueue(queue, { t: 'p', row: p });
   for (const e of d.expenses) queue = enqueue(queue, { t: 'e', row: e });
   for (const s of d.suppliers) queue = enqueue(queue, { t: 's', row: s });
   for (const b of d.purchases) queue = enqueue(queue, { t: 'b', row: b });
   for (const p of d.supplierPayments) queue = enqueue(queue, { t: 'sp', row: p });
+  for (const p of d.products) queue = enqueue(queue, { t: 'pr', row: p });
+  for (const s of d.sales) queue = enqueue(queue, { t: 'sa', row: s });
+  queue = enqueue(queue, { t: 'cfg', row: d.settings });
   return queue;
 }
 
@@ -81,16 +117,27 @@ function mergeFromServer(d, res, pending) {
     const i = customers.findIndex((x) => x.id === c.id);
     if (deleted) {
       if (i >= 0) customers.splice(i, 1);
-    } else if (i >= 0) customers[i] = c;
-    else customers.push(c);
+    } else if (i >= 0) customers[i] = { ...c, items: c.items ?? customers[i].items ?? [] };
+    else customers.push({ ...c, items: c.items ?? [] });
   }
 
   const deliveries = { ...d.deliveries };
   for (const r of res.deliveries) {
-    if (pending.has(`d:${r.customerId}|${r.date}`)) continue;
+    if (pending.has(`d:${r.customerId}|${r.date}|${r.productId || ''}`)) continue;
     const day = { ...(deliveries[r.date] || {}) };
-    if (r.deleted) delete day[r.customerId];
-    else day[r.customerId] = { qty: r.qty, rate: r.rate };
+    const cur = day[r.customerId];
+    if (!r.productId) {
+      // Main product row: decides whether the customer is marked for the day at all.
+      if (r.deleted) delete day[r.customerId];
+      else day[r.customerId] = { ...cur, qty: r.qty, rate: r.rate };
+    } else if (r.deleted) {
+      if (cur?.x) {
+        const { [r.productId]: _, ...x } = cur.x;
+        day[r.customerId] = { ...cur, x };
+      }
+    } else {
+      day[r.customerId] = { qty: 0, rate: 0, ...cur, x: { ...cur?.x, [r.productId]: { qty: r.qty, rate: r.rate } } };
+    }
     deliveries[r.date] = day;
   }
 
@@ -114,7 +161,11 @@ function mergeFromServer(d, res, pending) {
   const purchases = mergeRows(d.purchases, res.purchases, 'b', pending, (r) => r).sort(newestFirst);
   const supplierPayments = mergeRows(d.supplierPayments, res.supplierPayments, 'sp', pending, (r) => r).sort(newestFirst);
 
-  return { ...d, customers, deliveries, payments, expenses, suppliers, purchases, supplierPayments, cursor: res.cursor };
+  const products = mergeRows(d.products, res.products, 'pr', pending, (r) => r);
+  const sales = mergeRows(d.sales, res.sales, 'sa', pending, (r) => r).sort(newestFirst);
+  const settings = res.settings && !pending.has('cfg') ? { ...defaultSettings, ...res.settings } : d.settings;
+
+  return { ...d, settings, products, sales, customers, deliveries, payments, expenses, suppliers, purchases, supplierPayments, cursor: res.cursor };
 }
 
 const StoreCtx = createContext(null);
@@ -146,9 +197,12 @@ export function StoreProvider({ children }) {
       suppliers: sent.filter((q) => q.t === 's').map((q) => q.row),
       purchases: sent.filter((q) => q.t === 'b').map((q) => q.row),
       supplierPayments: sent.filter((q) => q.t === 'sp').map((q) => q.row),
+      products: sent.filter((q) => q.t === 'pr').map((q) => q.row),
+      sales: sent.filter((q) => q.t === 'sa').map((q) => q.row),
+      ...(sent.some((q) => q.t === 'cfg') && { settings: sent.find((q) => q.t === 'cfg').row }),
     };
     try {
-      const res = await api('/sync', { since: d.cursor, changes }, d.auth.token);
+      const res = await api('/sync', { since: d.cursor, changes, features: ['products'] }, d.auth.token);
       setData((cur) => {
         // Keep the same array when nothing was removed, so the queue effect doesn't re-trigger sync.
         const left = cur.queue.filter((q) => !sent.includes(q));
@@ -183,16 +237,24 @@ export function StoreProvider({ children }) {
   const api_ = useMemo(() => {
     const customerById = (id) => data.customers.find((c) => c.id === id);
 
+    // Delivered between two dates (inclusive). liters = quantity of the main product; amount = all products.
     const billed = (cid, from = '', to = '9999') => {
       let liters = 0;
       let amount = 0;
       for (const [date, day] of Object.entries(data.deliveries)) {
-        if (date < from || date > to || !day[cid]) continue;
-        liters += day[cid].qty;
-        amount += day[cid].qty * day[cid].rate;
+        const v = day[cid];
+        if (date < from || date > to || !v) continue;
+        liters += v.qty;
+        amount += v.qty * v.rate + sumX(v, (e) => e.qty * e.rate);
       }
       return { liters, amount };
     };
+
+    // Shop sales to a customer that weren't paid at the counter (they go on the customer's balance).
+    const salesOwed = (cid, from = '', to = '9999') =>
+      data.sales
+        .filter((s) => s.customerId === cid && s.date >= from && s.date <= to)
+        .reduce((sum, s) => sum + s.total - s.paid, 0);
 
     const paid = (cid, from = '', to = '9999') =>
       data.payments
@@ -235,6 +297,7 @@ export function StoreProvider({ children }) {
         }),
     });
     const purchaseOps = listOps('purchases', 'b');
+    const saleOps = listOps('sales', 'sa');
     const supplierPayOps = listOps('supplierPayments', 'sp');
 
     return {
@@ -244,7 +307,27 @@ export function StoreProvider({ children }) {
       customerById,
       billed,
       paid,
-      balance: (cid) => billed(cid).amount - paid(cid),
+      salesOwed,
+      // > 0: the customer owes money (deliveries + unpaid shop sales - payments).
+      balance: (cid) => billed(cid).amount + salesOwed(cid) - paid(cid),
+
+      // A customer's usual delivery: main product plus their active extra products.
+      usualFor: (c) => usual(c, data.products),
+
+      saveSettings: (patch) =>
+        setData((d) => {
+          const settings = { ...d.settings, ...patch };
+          return { ...d, settings, queue: enqueue(d.queue, { t: 'cfg', row: settings }) };
+        }),
+      saveProduct: (p) =>
+        setData((d) => {
+          const row = p.id ? { ...d.products.find((x) => x.id === p.id), ...p } : { active: true, ...p, id: uid() };
+          const products = p.id ? d.products.map((x) => (x.id === p.id ? row : x)) : [...d.products, row];
+          return { ...d, products, queue: enqueue(d.queue, { t: 'pr', row }) };
+        }),
+      addSale: (sale) => saleOps.add({ date: today(), note: '', ...sale, total: saleTotal(sale.items) }),
+      updateSale: (id, patch) => saleOps.update(id, patch.items ? { ...patch, total: saleTotal(patch.items) } : patch),
+      deleteSale: (id) => saleOps.remove(id),
 
       supplierById: (id) => data.suppliers.find((s) => s.id === id),
       bought,
@@ -327,31 +410,67 @@ export function StoreProvider({ children }) {
               deliveries[date] = day;
               continue;
             }
-            const { [id]: _, ...rest } = day;
+            const { [id]: gone, ...rest } = day;
             deliveries[date] = rest;
-            queue = enqueue(queue, { t: 'd', row: { customerId: id, date, qty: 0, rate: 0, deleted: true } });
+            for (const row of deliveryRows(id, date, gone, true)) queue = enqueue(queue, { t: 'd', row });
           }
           const payments = d.payments.filter((p) => {
             if (p.customerId !== id) return true;
             queue = enqueue(queue, { t: 'p', row: { ...p, deleted: true } });
             return false;
           });
-          return { ...d, customers: d.customers.filter((x) => x.id !== id), deliveries, payments, queue };
+          const sales = d.sales.filter((s) => {
+            if (s.customerId !== id) return true;
+            queue = enqueue(queue, { t: 'sa', row: { ...s, deleted: true } });
+            return false;
+          });
+          return { ...d, customers: d.customers.filter((x) => x.id !== id), deliveries, payments, sales, queue };
         }),
 
-      // qty === null removes the entry (back to "not marked")
+      // Main product. qty === null removes the whole entry (back to "not marked"); qty 0 marks it "not
+      // given" for every product. The first mark of the day also fills in the customer's usual extras.
       setDelivery: (date, cid, qty) =>
         setData((d) => {
           const day = { ...(d.deliveries[date] || {}) };
-          let row;
+          const cur = day[cid];
+          let queue = d.queue;
           if (qty === null) {
             delete day[cid];
-            row = { customerId: cid, date, qty: 0, rate: 0, deleted: true };
+            if (cur) for (const row of deliveryRows(cid, date, cur, true)) queue = enqueue(queue, { t: 'd', row });
           } else {
-            day[cid] = { qty, rate: day[cid]?.rate ?? d.customers.find((c) => c.id === cid).rate };
-            row = { customerId: cid, date, ...day[cid] };
+            const c = d.customers.find((x) => x.id === cid);
+            const base = cur || usual(c, d.products);
+            const next = { ...base, qty, rate: base.rate ?? c.rate };
+            if (qty === 0) next.x = Object.fromEntries(Object.entries(base.x || {}).map(([k, e]) => [k, { ...e, qty: 0 }]));
+            day[cid] = next;
+            for (const row of deliveryRows(cid, date, next)) queue = enqueue(queue, { t: 'd', row });
           }
-          return { ...d, deliveries: { ...d.deliveries, [date]: day }, queue: enqueue(d.queue, { t: 'd', row }) };
+          return { ...d, deliveries: { ...d.deliveries, [date]: day }, queue };
+        }),
+
+      // Gives / takes back everything the customer usually gets.
+      giveUsual: (date, cid) =>
+        setData((d) => {
+          const c = d.customers.find((x) => x.id === cid);
+          const next = usual(c, d.products);
+          let queue = d.queue;
+          for (const row of deliveryRows(cid, date, next)) queue = enqueue(queue, { t: 'd', row });
+          return { ...d, deliveries: { ...d.deliveries, [date]: { ...(d.deliveries[date] || {}), [cid]: next } }, queue };
+        }),
+
+      // One extra product's quantity for the day (marks the customer if they weren't yet).
+      setExtra: (date, cid, productId, qty) =>
+        setData((d) => {
+          const day = { ...(d.deliveries[date] || {}) };
+          const c = d.customers.find((x) => x.id === cid);
+          const base = day[cid] || usual(c, d.products);
+          const item = (c.items || []).find((i) => i.productId === productId);
+          const prev = base.x?.[productId];
+          const next = { ...base, x: { ...base.x, [productId]: { qty, rate: prev?.rate ?? item?.rate ?? 0 } } };
+          day[cid] = next;
+          let queue = d.queue;
+          for (const row of deliveryRows(cid, date, next)) queue = enqueue(queue, { t: 'd', row });
+          return { ...d, deliveries: { ...d.deliveries, [date]: day }, queue };
         }),
 
       // Marks every active customer not yet marked on `date` as given their usual quantity.
@@ -360,9 +479,9 @@ export function StoreProvider({ children }) {
           const day = { ...(d.deliveries[date] || {}) };
           let queue = d.queue;
           for (const c of d.customers) {
-            if (!c.active || day[c.id] || !(c.defaultQty > 0)) continue;
-            day[c.id] = { qty: c.defaultQty, rate: c.rate };
-            queue = enqueue(queue, { t: 'd', row: { customerId: c.id, date, ...day[c.id] } });
+            if (!c.active || day[c.id] || !hasUsual(c, d.products)) continue;
+            day[c.id] = usual(c, d.products);
+            for (const row of deliveryRows(c.id, date, day[c.id])) queue = enqueue(queue, { t: 'd', row });
           }
           return { ...d, deliveries: { ...d.deliveries, [date]: day }, queue };
         }),

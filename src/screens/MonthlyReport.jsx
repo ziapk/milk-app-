@@ -4,10 +4,12 @@ import { useT } from '../i18n';
 import { drawReport } from '../bill';
 import ImagePreview from './ImagePreview';
 import { MonthBar } from './CustomerBill';
+import { useProducts } from '../products';
 
 // All customers' milk, bill, payments and dues for one month, as a shareable image.
 export default function MonthlyReport({ onClose }) {
-  const { data, billed, paid } = useStore();
+  const { data, billed, paid, salesOwed } = useStore();
+  const { main } = useProducts();
   const t = useT();
   const [month, setMonth] = useState(today().slice(0, 7));
   const [canvas, setCanvas] = useState(null);
@@ -21,11 +23,12 @@ export default function MonthlyReport({ onClose }) {
     const rows = [];
     for (const c of [...data.customers].sort((a, b) => a.name.localeCompare(b.name))) {
       const b = billed(c.id, from, to);
+      const shop = salesOwed(c.id, from, to);
       const p = paid(c.id, from, to);
       // Due as it stood at the end of this month, not today.
-      const due = Math.max(0, billed(c.id, '', to).amount - paid(c.id, '', to));
-      if (b.liters === 0 && p === 0 && Math.round(due) === 0) continue;
-      rows.push({ name: c.name, liters: b.liters, amount: b.amount, paid: p, due });
+      const due = Math.max(0, billed(c.id, '', to).amount + salesOwed(c.id, '', to) - paid(c.id, '', to));
+      if (b.amount === 0 && shop === 0 && p === 0 && Math.round(due) === 0) continue;
+      rows.push({ name: c.name, liters: b.liters, amount: b.amount + shop, paid: p, due });
     }
     const sum = (k) => rows.reduce((s, r) => s + r[k], 0);
     let live = true;
@@ -37,11 +40,12 @@ export default function MonthlyReport({ onClose }) {
       monthName,
       rows,
       totals: { liters: sum('liters'), amount: sum('amount'), paid: sum('paid'), due: sum('due') },
+      main,
     }).then((c) => live && setCanvas(c));
     return () => {
       live = false;
     };
-  }, [month, data, billed, paid, t, monthName]);
+  }, [month, data, billed, paid, salesOwed, t, monthName, main.name, main.unit]);
 
   if (!canvas) return null;
 

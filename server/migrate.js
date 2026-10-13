@@ -36,6 +36,52 @@ export async function migrate() {
     console.log("migrate: added distributors.last_seen_at");
   }
 
+  // Products: one main product per account (name/unit in distributors.settings), extra products in
+  // a catalogue, extra daily products per customer, and shop (counter) sales.
+  if (!(await hasColumn("distributors", "settings"))) {
+    await db.query(`ALTER TABLE distributors ADD COLUMN settings TEXT NULL AFTER last_seen_at`);
+    await db.query(`ALTER TABLE distributors ADD COLUMN settings_updated_at TIMESTAMP(3) NULL AFTER settings`);
+    console.log("migrate: added distributors.settings");
+  }
+  if (!(await hasColumn("customers", "items"))) {
+    await db.query(`ALTER TABLE customers ADD COLUMN items TEXT NULL AFTER default_qty`);
+    console.log("migrate: added customers.items");
+  }
+  if (!(await hasColumn("deliveries", "product_id"))) {
+    // '' = the main product, so every existing row keeps its meaning.
+    await db.query(`ALTER TABLE deliveries ADD COLUMN product_id VARCHAR(24) NOT NULL DEFAULT '' AFTER customer_id`);
+    await db.query(`ALTER TABLE deliveries DROP PRIMARY KEY, ADD PRIMARY KEY (distributor_id, customer_id, date, product_id)`);
+    console.log("migrate: added deliveries.product_id");
+  }
+  await db.query(`CREATE TABLE IF NOT EXISTS products (
+  distributor_id INT NOT NULL,
+  id VARCHAR(24) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  unit VARCHAR(30) NOT NULL DEFAULT '',
+  price DECIMAL(10,2) NOT NULL DEFAULT 0,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  deleted TINYINT(1) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (distributor_id, id),
+  KEY idx_products_sync (distributor_id, updated_at),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+)`);
+  await db.query(`CREATE TABLE IF NOT EXISTS sales (
+  distributor_id INT NOT NULL,
+  id VARCHAR(24) NOT NULL,
+  customer_id VARCHAR(24) NOT NULL DEFAULT '',
+  date DATE NOT NULL,
+  items TEXT NOT NULL,
+  total DECIMAL(12,2) NOT NULL DEFAULT 0,
+  paid DECIMAL(12,2) NOT NULL DEFAULT 0,
+  note VARCHAR(255) NOT NULL DEFAULT '',
+  deleted TINYINT(1) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (distributor_id, id),
+  KEY idx_sales_sync (distributor_id, updated_at),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+)`);
+
   // Supply module: milk bought from suppliers (CREATE ... IF NOT EXISTS is safe to repeat).
   await db.query(`CREATE TABLE IF NOT EXISTS suppliers (
   distributor_id INT NOT NULL,

@@ -8,6 +8,7 @@ import { SupplierPayBox } from './SupplierLedger';
 import { usePeriod, PeriodBar } from './Period';
 import { drawExpenses } from '../bill';
 import ImagePreview from './ImagePreview';
+import { SaleBox, saleSummary } from './Shop';
 
 const catIcon = Object.fromEntries(CATEGORIES);
 // Newest first. Ids start with their creation time, so on the same day a longer / greater id is newer.
@@ -25,13 +26,17 @@ export default function Payments({ onOpenSuppliers }) {
   const period = usePeriod();
 
   const sum = (rows) => rows.reduce((s, x) => s + x.amount, 0);
-  const received = data.payments.filter((p) => period.match(p.date));
+  // Received = customer payments + money taken at the shop counter.
+  const received = [
+    ...data.payments.filter((p) => period.match(p.date)).map((row) => ({ kind: 'payment', ...row })),
+    ...data.sales.filter((s) => period.match(s.date) && s.paid > 0).map((row) => ({ kind: 'sale', ...row, amount: row.paid })),
+  ].sort(newer);
   const spent = [
     ...data.expenses.filter((e) => period.match(e.date)).map((row) => ({ kind: 'expense', ...row })),
     ...data.supplierPayments.filter((p) => period.match(p.date)).map((row) => ({ kind: 'supplier', ...row })),
   ].sort(newer);
-  // Cash in hand = every payment collected minus every expense and supplier payment, since the start.
-  const cash = sum(data.payments) - sum(data.expenses) - sum(data.supplierPayments);
+  // Cash in hand = every payment and shop takings, minus every expense and supplier payment, since the start.
+  const cash = sum(data.payments) + data.sales.reduce((s, x) => s + x.paid, 0) - sum(data.expenses) - sum(data.supplierPayments);
   // Still to pay suppliers, all time (an advance to one supplier doesn't cancel another's due).
   const owedSuppliers = data.suppliers.reduce((s, sp) => s + Math.max(0, supplierBalance(sp.id)), 0);
   const out = side === 'out';
@@ -106,7 +111,23 @@ export default function Payments({ onOpenSuppliers }) {
 
       {!out &&
         received.map((p) =>
-          editing === p.id ? (
+          p.kind === 'sale' ? (
+            editing === p.id ? (
+              <SaleBox key={p.id} sale={data.sales.find((s) => s.id === p.id)} onDone={() => setEditing(null)} />
+            ) : (
+              <div key={p.id} className="card row small">
+                <button className="grow link plain" onClick={() => setEditing(p.id)}>
+                  <span className="catico prod"><Icon name="store" /></span>
+                  <div className="grow">
+                    <div>{p.customerId ? customerById(p.customerId)?.name || '?' : t.walkIn}<span className="muted"> · {saleSummary(p)}</span></div>
+                    <div className="muted">{t.fmtDate(p.date)}</div>
+                  </div>
+                  <b className="greentext">{t.rs} {money(p.amount)}</b>
+                  <Icon name="pen" className="muted" />
+                </button>
+              </div>
+            )
+          ) : editing === p.id ? (
             <div key={p.id}>
               <div className="name pad">{customerById(p.customerId)?.name}</div>
               <PayBox payment={p} onDone={() => setEditing(null)} />

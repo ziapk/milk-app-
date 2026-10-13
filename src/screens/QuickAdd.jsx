@@ -12,9 +12,12 @@ import SearchBar from './SearchBar';
 import { Balance } from './Customers';
 import { SupplierBalance } from './Suppliers';
 import { PurchaseBox, SupplierPayBox } from './SupplierLedger';
+import { useProducts } from '../products';
+import { SaleBox } from './Shop';
 
 // Everything that can be created from the floating + button. [key, icon, label key, colour]
 const ACTIONS = [
+  ['sale', 'cart-plus', 'newSale', 'primary', 'shop'],
   ['customer', 'user-plus', 'addCustomer', 'primary'],
   ['payment', 'money-bill-wave', 'receive', 'green'],
   ['expense', 'receipt', 'addExpense', 'red'],
@@ -26,6 +29,8 @@ const ACTIONS = [
 // Floating + button that opens the list of things to add.
 export function Fab({ onPick }) {
   const t = useT();
+  const { data } = useStore();
+  const actions = ACTIONS.filter(([, , , , mode]) => !mode || data.settings[mode]);
   const [open, setOpen] = useState(false);
   useBackClose(() => setOpen(false), open);
 
@@ -36,7 +41,7 @@ export function Fab({ onPick }) {
           <div className="fabsheet" onClick={(e) => e.stopPropagation()} role="menu" aria-label={t.newEntry}>
             <div className="fabtitle">{t.newEntry}</div>
             <div className="fabgrid">
-              {ACTIONS.map(([k, icon, label, colour]) => (
+              {actions.map(([k, icon, label, colour]) => (
                 <button key={k} role="menuitem" className={`fabitem ${colour}`} onClick={() => { setOpen(false); onPick(k); }}>
                   <span className="fabico"><Icon name={icon} /></span>
                   {t[label]}
@@ -61,6 +66,7 @@ export default function QuickAdd({ action, onDone, onSwitch }) {
   const [, icon, label] = ACTIONS.find(([k]) => k === action);
 
   let body;
+  if (action === 'sale') return <SaleBox onDone={onDone} />;
   if (action === 'customer') body = <CustomerForm onDone={onDone} />;
   else if (action === 'supplier') body = <SupplierForm onDone={onDone} />;
   else if (action === 'expense') body = <ExpenseBox onDone={onDone} />;
@@ -113,6 +119,7 @@ function PickCustomer({ onPick, onAdd }) {
 function PickSupplier({ onPick, onAdd }) {
   const { data, supplierBalance } = useStore();
   const t = useT();
+  const { main } = useProducts();
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
   const list = data.suppliers
@@ -133,7 +140,7 @@ function PickSupplier({ onPick, onAdd }) {
         <button key={s.id} className={`card row link pickrow ${s.active ? '' : 'dim'}`} onClick={() => onPick(s)}>
           <div className="grow">
             <div className="name">{s.name}</div>
-            <div className="muted">{t.rs} {s.rate} / {t.liters}</div>
+            <div className="muted">{t.rs} {s.rate} / {main.unit}</div>
           </div>
           <SupplierBalance amount={supplierBalance(s.id)} />
         </button>
