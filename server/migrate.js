@@ -36,6 +36,49 @@ export async function migrate() {
     console.log("migrate: added distributors.last_seen_at");
   }
 
+  // Supply module: milk bought from suppliers (CREATE ... IF NOT EXISTS is safe to repeat).
+  await db.query(`CREATE TABLE IF NOT EXISTS suppliers (
+  distributor_id INT NOT NULL,
+  id VARCHAR(24) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  phone VARCHAR(20) NOT NULL DEFAULT '',
+  address VARCHAR(255) NOT NULL DEFAULT '',
+  rate DECIMAL(10,2) NOT NULL DEFAULT 0,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  deleted TINYINT(1) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (distributor_id, id),
+  KEY idx_suppliers_sync (distributor_id, updated_at),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+)`);
+  await db.query(`CREATE TABLE IF NOT EXISTS purchases (
+  distributor_id INT NOT NULL,
+  id VARCHAR(24) NOT NULL,
+  supplier_id VARCHAR(24) NOT NULL,
+  date DATE NOT NULL,
+  qty DECIMAL(8,2) NOT NULL DEFAULT 0,
+  rate DECIMAL(10,2) NOT NULL DEFAULT 0,
+  note VARCHAR(255) NOT NULL DEFAULT '',
+  deleted TINYINT(1) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (distributor_id, id),
+  KEY idx_purchases_sync (distributor_id, updated_at),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+)`);
+  await db.query(`CREATE TABLE IF NOT EXISTS supplier_payments (
+  distributor_id INT NOT NULL,
+  id VARCHAR(24) NOT NULL,
+  supplier_id VARCHAR(24) NOT NULL,
+  date DATE NOT NULL,
+  amount DECIMAL(12,2) NOT NULL,
+  note VARCHAR(255) NOT NULL DEFAULT '',
+  deleted TINYINT(1) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (distributor_id, id),
+  KEY idx_supplier_payments_sync (distributor_id, updated_at),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+)`);
+
   // Dashboard admin tables (CREATE ... IF NOT EXISTS is safe to repeat).
   await db.query(`CREATE TABLE IF NOT EXISTS admins (
   id INT AUTO_INCREMENT PRIMARY KEY,

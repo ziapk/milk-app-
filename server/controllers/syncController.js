@@ -18,6 +18,9 @@ export const sync = async (req, res) => {
   const deliveries = (changes.deliveries || []).filter((d) => id(d.customerId) && date(d.date) && num(d.qty) && num(d.rate));
   const payments = (changes.payments || []).filter((p) => id(p.id) && id(p.customerId) && date(p.date) && num(p.amount));
   const expenses = (changes.expenses || []).filter((e) => id(e.id) && date(e.date) && num(e.amount));
+  const suppliers = (changes.suppliers || []).filter((s) => id(s.id) && String(s.name || "").trim() && num(s.rate));
+  const purchases = (changes.purchases || []).filter((b) => id(b.id) && id(b.supplierId) && date(b.date) && num(b.qty) && num(b.rate));
+  const supplierPayments = (changes.supplierPayments || []).filter((p) => id(p.id) && id(p.supplierId) && date(p.date) && num(p.amount));
 
   const conn = await db.getConnection();
   try {
@@ -66,6 +69,37 @@ export const sync = async (req, res) => {
       );
     }
 
+    for (const sp of suppliers) {
+      await conn.execute(
+        `INSERT INTO suppliers (distributor_id, id, name, phone, address, rate, active, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE name = VALUES(name), phone = VALUES(phone), address = VALUES(address),
+           rate = VALUES(rate), active = VALUES(active), deleted = VALUES(deleted), updated_at = CURRENT_TIMESTAMP(3)`,
+        [distributorId, sp.id, String(sp.name).trim().slice(0, 100), String(sp.phone || "").slice(0, 20),
+         String(sp.address || "").slice(0, 255), Number(sp.rate), flag(sp.active ?? true), flag(sp.deleted)],
+      );
+    }
+
+    for (const b of purchases) {
+      await conn.execute(
+        `INSERT INTO purchases (distributor_id, id, supplier_id, date, qty, rate, note, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE supplier_id = VALUES(supplier_id), date = VALUES(date), qty = VALUES(qty),
+           rate = VALUES(rate), note = VALUES(note), deleted = VALUES(deleted), updated_at = CURRENT_TIMESTAMP(3)`,
+        [distributorId, b.id, b.supplierId, b.date, Number(b.qty), Number(b.rate), String(b.note || "").slice(0, 255), flag(b.deleted)],
+      );
+    }
+
+    for (const p of supplierPayments) {
+      await conn.execute(
+        `INSERT INTO supplier_payments (distributor_id, id, supplier_id, date, amount, note, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE supplier_id = VALUES(supplier_id), date = VALUES(date), amount = VALUES(amount),
+           note = VALUES(note), deleted = VALUES(deleted), updated_at = CURRENT_TIMESTAMP(3)`,
+        [distributorId, p.id, p.supplierId, p.date, Number(p.amount), String(p.note || "").slice(0, 255), flag(p.deleted)],
+      );
+    }
+
     await conn.commit();
   } catch (err) {
     await conn.rollback();
@@ -97,11 +131,27 @@ export const sync = async (req, res) => {
     args,
   );
 
+  const [outSuppliers] = await db.execute(
+    `SELECT id, name, phone, address, rate, active = 1 AS active, deleted FROM suppliers WHERE ${after}`,
+    args,
+  );
+  const [outPurchases] = await db.execute(
+    `SELECT id, supplier_id AS supplierId, date, qty, rate, note, deleted FROM purchases WHERE ${after}`,
+    args,
+  );
+  const [outSupplierPayments] = await db.execute(
+    `SELECT id, supplier_id AS supplierId, date, amount, note, deleted FROM supplier_payments WHERE ${after}`,
+    args,
+  );
+
   res.json({
     cursor,
     customers: outCustomers.map((c) => ({ ...c, active: !!c.active })),
     deliveries: outDeliveries,
     payments: outPayments,
     expenses: outExpenses,
+    suppliers: outSuppliers.map((sp) => ({ ...sp, active: !!sp.active })),
+    purchases: outPurchases,
+    supplierPayments: outSupplierPayments,
   });
 };

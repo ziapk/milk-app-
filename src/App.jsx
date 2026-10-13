@@ -9,6 +9,7 @@ import More from './screens/More';
 import Login from './screens/Login';
 import Stats from './screens/Stats';
 import Expenses from './screens/Expenses';
+import Suppliers from './screens/Suppliers';
 import Icon, { BikeIcon } from './Icon';
 import CustomerForm from './screens/CustomerForm';
 import { useBackClose } from './back';
@@ -21,6 +22,7 @@ const TABS = [
   ['expenses', 'expenses', 'receipt'],
 ];
 const MENU = [
+  ['suppliers', 'truck', 'supplierLedger'],
   ['stats', 'chart-pie'],
   ['more', 'gear', 'settings'],
 ];
@@ -64,6 +66,7 @@ export default function App() {
   else if (tab === 'payments') screen = <Payments />;
   else if (tab === 'expenses') screen = <Expenses />;
   else if (tab === 'stats') screen = <Stats />;
+  else if (tab === 'suppliers') screen = <Suppliers />;
   else screen = <More />;
 
   return (
