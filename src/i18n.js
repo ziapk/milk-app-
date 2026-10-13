@@ -1,8 +1,11 @@
-import { useStore } from './store';
+import { useStore, formatDate } from './store';
 
 const dict = {
   ur: {
     appName: 'مو پارٹنر',
+    fmtDate: (iso) =>
+      formatDate(iso, ['اتوار', 'پیر', 'منگل', 'بدھ', 'جمعرات', 'جمعہ', 'ہفتہ'],
+        ['جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نومبر', 'دسمبر']),
     today: 'آج',
     customers: 'گاہک',
     payments: 'وصولی',
@@ -154,6 +157,9 @@ const dict = {
   },
   en: {
     appName: 'Moo Partner',
+    fmtDate: (iso) =>
+      formatDate(iso, ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']),
     today: 'Today',
     customers: 'Customers',
     payments: 'Payments',

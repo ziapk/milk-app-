@@ -26,14 +26,7 @@ export default function Today() {
   const shown = filterCustomers(list, query);
   const unmarked = list.filter((c) => !day[c.id] && c.defaultQty > 0).length;
   const doMarkAll = () => confirm(t.markAllConfirm(unmarked)) && markAll(date);
-  const label = new Date(date + "T00:00:00").toLocaleDateString(
-    data.lang === "ur" ? "ur-PK" : "en-PK",
-    {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    },
-  );
+  const label = t.fmtDate(date);
 
   if (billFor) return <CustomerBill id={billFor} initialMonth={date.slice(0, 7)} onClose={() => setBillFor(null)} />;
 

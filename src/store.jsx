@@ -28,6 +28,13 @@ export const toISO = (d) => {
   const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
   return z.toISOString().slice(0, 10);
 };
+// The date format shown in the app: "<weekday> <day> <month> <year>", e.g. "Monday 12 January 2026".
+// Day and month names come from the language (see t.fmtDate in i18n.js).
+export const formatDate = (iso, weekdays, months) => {
+  const d = new Date(iso + 'T00:00:00');
+  // Non-breaking spaces keep "12 January 2026" together; a narrow screen only breaks after the weekday.
+  return `${weekdays[d.getDay()]} ${d.getDate()}\u00a0${months[d.getMonth()]}\u00a0${d.getFullYear()}`;
+};
 export const addDays = (iso, n) => {
   const d = new Date(iso + 'T00:00:00');
   d.setDate(d.getDate() + n);

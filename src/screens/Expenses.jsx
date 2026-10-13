@@ -83,7 +83,7 @@ export default function Expenses({ onOpenSuppliers }) {
               <span className="catico"><Icon name={catIcon[e.category] || 'box'} /></span>
               <div className="grow">
                 <div>{t.cat[e.category] || t.cat.other}{e.note && ` · ${e.note}`}</div>
-                <div className="muted" dir="ltr">{e.date}</div>
+                <div className="muted">{t.fmtDate(e.date)}</div>
               </div>
               <b className="redtext">{t.rs} {money(e.amount)}</b>
               <Icon name="pen" className="muted" />

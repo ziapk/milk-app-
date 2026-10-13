@@ -68,7 +68,7 @@ export default function Payments() {
               {showOut && <span className="catico"><Icon name="truck" /></span>}
               <div className="grow">
                 <div>{name}{p.note && <span className="muted"> · {p.note}</span>}</div>
-                <div className="muted" dir="ltr">{p.date}</div>
+                <div className="muted">{t.fmtDate(p.date)}</div>
               </div>
               <b className={showOut ? 'redtext' : 'greentext'}>{t.rs} {money(p.amount)}</b>
               <Icon name="pen" className="muted" />

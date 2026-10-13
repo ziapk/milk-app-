@@ -14,7 +14,7 @@ export function usePeriod() {
 
   const locale = data.lang === 'ur' ? 'ur-PK' : 'en-PK';
   const fmt = (iso, opts) => new Date(iso + 'T00:00:00').toLocaleDateString(locale, opts);
-  const dayLabel = day === today() ? t.today : fmt(day, { weekday: 'short', day: 'numeric', month: 'long' });
+  const dayLabel = day === today() ? t.today : t.fmtDate(day);
   const monthLabel = fmt(month + '-01', { month: 'long', year: 'numeric' });
 
   return {

@@ -42,7 +42,6 @@ export default function SupplierLedger({ id, onBack }) {
 
   const locale = data.lang === 'ur' ? 'ur-PK' : 'en-PK';
   const monthName = new Date(from + 'T00:00:00').toLocaleDateString(locale, { month: 'long', year: 'numeric' });
-  const dayLabel = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 
   return (
     <>
@@ -103,7 +102,7 @@ export default function SupplierLedger({ id, onBack }) {
                 </span>
                 <div className="grow">
                   <div>{e.kind === 'b' ? t.purchaseLine(num(e.row.qty), money(e.row.rate)) : t.paymentEntry}{e.row.note && ` · ${e.row.note}`}</div>
-                  <div className="muted">{dayLabel(e.row.date)}</div>
+                  <div className="muted">{t.fmtDate(e.row.date)}</div>
                 </div>
                 <div className="lamt">
                   <b className={e.kind === 'b' ? 'redtext' : 'greentext'} dir="ltr">{e.kind === 'b' ? '+' : '−'}{money(Math.abs(e.amount))}</b>
