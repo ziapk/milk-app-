@@ -9,8 +9,8 @@ import { usePeriod, PeriodBar } from './Period';
 
 const catIcon = Object.fromEntries(CATEGORIES);
 
-export default function Expenses() {
-  const { data, deleteExpense } = useStore();
+export default function Expenses({ onOpenSuppliers }) {
+  const { data, deleteExpense, supplierBalance } = useStore();
   const t = useT();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -22,6 +22,8 @@ export default function Expenses() {
   const spent = sum(list);
   // Cash in hand = every payment collected minus every expense and supplier payment, since the start.
   const cash = sum(data.payments) - sum(data.expenses) - sum(data.supplierPayments);
+  // Still to pay suppliers, all time (advances to one supplier don't cancel another's due).
+  const owedSuppliers = data.suppliers.reduce((s, sp) => s + Math.max(0, supplierBalance(sp.id)), 0);
   const locale = data.lang === 'ur' ? 'ur-PK' : 'en-PK';
 
   const showList = async () => {
@@ -47,6 +49,13 @@ export default function Expenses() {
         <small><Icon name="money-bill-wave" /> {t.cashInHand}</small>
         <b>{money(cash)}</b>
       </div>
+      {data.suppliers.length > 0 && (
+        <button className={`stat span-full owedcard ${owedSuppliers > 0.5 ? 'red' : 'green'}`} onClick={onOpenSuppliers}>
+          <small><Icon name="truck" /> {t.owedSuppliers}</small>
+          <b>{t.rs} {money(owedSuppliers)}</b>
+          <span className="owedlink">{t.supplierLedger} <Icon name="chevron-right" flip /></span>
+        </button>
+      )}
       {adding ? (
         <ExpenseBox onDone={() => setAdding(false)} />
       ) : (

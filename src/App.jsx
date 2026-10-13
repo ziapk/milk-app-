@@ -64,7 +64,7 @@ export default function App() {
   else if (tab === 'today') screen = <Today />;
   else if (tab === 'customers') screen = <Customers onOpen={setOpenCustomer} />;
   else if (tab === 'payments') screen = <Payments />;
-  else if (tab === 'expenses') screen = <Expenses />;
+  else if (tab === 'expenses') screen = <Expenses onOpenSuppliers={() => go('suppliers')} />;
   else if (tab === 'stats') screen = <Stats />;
   else if (tab === 'suppliers') screen = <Suppliers />;
   else screen = <More />;

@@ -195,7 +195,7 @@ function PurchaseBox({ supplier, purchase, onDone }) {
 }
 
 // Money paid to the supplier (new), or edit an existing `payment`.
-function SupplierPayBox({ supplierId, payment, onDone }) {
+export function SupplierPayBox({ supplierId, payment, onDone }) {
   const { supplierBalance, addSupplierPayment, updateSupplierPayment } = useStore();
   const t = useT();
   useBackClose(onDone);

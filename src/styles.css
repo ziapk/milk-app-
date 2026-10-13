@@ -332,3 +332,15 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 .lamt small { font-size: 13px; }
 .empty.small { padding: 16px 0; margin: 0; }
 .stat b small { font-size: 15px; font-weight: 600; }
+
+/* Payments: Received / Paid to suppliers switch */
+.paysides { margin: 8px 0 0; }
+.paysides .stat { border: 2px solid transparent; font: inherit; color: inherit; cursor: pointer; box-shadow: 0 1px 3px #0001; }
+.paysides .stat.green.on { border-color: var(--green); background: #effaf3; }
+.paysides .stat.red.on { border-color: var(--red); background: #fdf1f1; }
+
+/* Expenses: tappable "owed to suppliers" card */
+.owedcard { width: 100%; border: 2px solid transparent; font: inherit; color: inherit; cursor: pointer; box-shadow: 0 1px 3px #0001; }
+.owedcard.red { background: #fdf1f1; }
+.owedcard:active { border-color: var(--red); }
+.owedlink { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--primary); }
