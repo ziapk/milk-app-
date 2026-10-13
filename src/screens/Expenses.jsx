@@ -20,8 +20,8 @@ export default function Expenses() {
   const list = data.expenses.filter((e) => period.match(e.date));
   const sum = (rows) => rows.reduce((s, x) => s + x.amount, 0);
   const spent = sum(list);
-  // Cash in hand = every payment collected minus every expense paid, since the start.
-  const cash = sum(data.payments) - sum(data.expenses);
+  // Cash in hand = every payment collected minus every expense and supplier payment, since the start.
+  const cash = sum(data.payments) - sum(data.expenses) - sum(data.supplierPayments);
   const locale = data.lang === 'ur' ? 'ur-PK' : 'en-PK';
 
   const showList = async () => {

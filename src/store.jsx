@@ -8,9 +8,12 @@ const KEY = 'doodh-app-v1';
 // deliveries: { 'YYYY-MM-DD': { [customerId]: { qty, rate } } }  — rate copied at delivery time so price changes don't rewrite history
 // payments:   [{ id, customerId, date, amount }]
 // expenses:   [{ id, date, category, amount, note }]
-// queue:      changes not yet sent to the server, one per row: [{ t: 'c' | 'd' | 'p' | 'e', row }]
+// suppliers:        [{ id, name, phone, address, rate, active }]  — people the partner buys milk from
+// purchases:        [{ id, supplierId, date, qty, rate, note }]   — milk bought (several a day is fine)
+// supplierPayments: [{ id, supplierId, date, amount, note }]      — money paid to a supplier
+// queue:      changes not yet sent to the server, one per row: [{ t: 'c' | 'd' | 'p' | 'e' | 's' | 'b' | 'sp', row }]
 // cursor:     server time of the last successful sync
-const empty = { customers: [], deliveries: {}, payments: [], expenses: [], lang: 'ur', urduFont: 'nastaliq', auth: null, queue: [], cursor: null };
+const empty = { customers: [], deliveries: {}, payments: [], expenses: [], suppliers: [], purchases: [], supplierPayments: [], lang: 'ur', urduFont: 'nastaliq', auth: null, queue: [], cursor: null };
 
 function load() {
   try {
@@ -44,10 +47,24 @@ function queueEverything(d) {
     for (const [customerId, v] of Object.entries(day)) queue = enqueue(queue, { t: 'd', row: { customerId, date, ...v } });
   for (const p of d.payments) queue = enqueue(queue, { t: 'p', row: p });
   for (const e of d.expenses) queue = enqueue(queue, { t: 'e', row: e });
+  for (const s of d.suppliers) queue = enqueue(queue, { t: 's', row: s });
+  for (const b of d.purchases) queue = enqueue(queue, { t: 'b', row: b });
+  for (const p of d.supplierPayments) queue = enqueue(queue, { t: 'sp', row: p });
   return queue;
 }
 
 const newestFirst = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+
+// Server rows into a list keyed by id: replace or add each row, drop deleted ones, skip rows still pending here.
+function mergeRows(list, rows = [], t, pending, pick) {
+  let out = list;
+  for (const { deleted, ...r } of rows) {
+    if (pending.has(`${t}:${r.id}`)) continue;
+    out = out.filter((x) => x.id !== r.id);
+    if (!deleted) out.push(pick(r));
+  }
+  return out;
+}
 
 // Apply rows from the server, except rows the phone changed again while the request was in flight.
 function mergeFromServer(d, res, pending) {
@@ -86,7 +103,11 @@ function mergeFromServer(d, res, pending) {
   }
   expenses.sort(newestFirst);
 
-  return { ...d, customers, deliveries, payments, expenses, cursor: res.cursor };
+  const suppliers = mergeRows(d.suppliers, res.suppliers, 's', pending, (r) => r);
+  const purchases = mergeRows(d.purchases, res.purchases, 'b', pending, (r) => r).sort(newestFirst);
+  const supplierPayments = mergeRows(d.supplierPayments, res.supplierPayments, 'sp', pending, (r) => r).sort(newestFirst);
+
+  return { ...d, customers, deliveries, payments, expenses, suppliers, purchases, supplierPayments, cursor: res.cursor };
 }
 
 const StoreCtx = createContext(null);
@@ -115,6 +136,9 @@ export function StoreProvider({ children }) {
       deliveries: sent.filter((q) => q.t === 'd').map((q) => q.row),
       payments: sent.filter((q) => q.t === 'p').map((q) => q.row),
       expenses: sent.filter((q) => q.t === 'e').map((q) => q.row),
+      suppliers: sent.filter((q) => q.t === 's').map((q) => q.row),
+      purchases: sent.filter((q) => q.t === 'b').map((q) => q.row),
+      supplierPayments: sent.filter((q) => q.t === 'sp').map((q) => q.row),
     };
     try {
       const res = await api('/sync', { since: d.cursor, changes }, d.auth.token);
@@ -168,6 +192,44 @@ export function StoreProvider({ children }) {
         .filter((p) => p.customerId === cid && p.date >= from && p.date <= to)
         .reduce((s, p) => s + p.amount, 0);
 
+    // Milk bought from / money paid to a supplier between two dates (inclusive).
+    const bought = (sid, from = '', to = '9999') => {
+      let liters = 0;
+      let amount = 0;
+      for (const b of data.purchases) {
+        if (b.supplierId !== sid || b.date < from || b.date > to) continue;
+        liters += b.qty;
+        amount += b.qty * b.rate;
+      }
+      return { liters, amount };
+    };
+    const paidSupplier = (sid, from = '', to = '9999') =>
+      data.supplierPayments
+        .filter((p) => p.supplierId === sid && p.date >= from && p.date <= to)
+        .reduce((s, p) => s + p.amount, 0);
+
+    // Generic add / edit / delete for the id-keyed supplier lists.
+    const listOps = (key, t) => ({
+      add: (row) =>
+        setData((d) => {
+          const r = { id: uid(), ...row };
+          return { ...d, [key]: [r, ...d[key]].sort(newestFirst), queue: enqueue(d.queue, { t, row: r }) };
+        }),
+      update: (id, patch) =>
+        setData((d) => {
+          const r = { ...d[key].find((x) => x.id === id), ...patch };
+          return { ...d, [key]: d[key].map((x) => (x.id === id ? r : x)).sort(newestFirst), queue: enqueue(d.queue, { t, row: r }) };
+        }),
+      remove: (id) =>
+        setData((d) => {
+          const r = d[key].find((x) => x.id === id);
+          if (!r) return d;
+          return { ...d, [key]: d[key].filter((x) => x.id !== id), queue: enqueue(d.queue, { t, row: { ...r, deleted: true } }) };
+        }),
+    });
+    const purchaseOps = listOps('purchases', 'b');
+    const supplierPayOps = listOps('supplierPayments', 'sp');
+
     return {
       data,
       syncState,
@@ -176,6 +238,43 @@ export function StoreProvider({ children }) {
       billed,
       paid,
       balance: (cid) => billed(cid).amount - paid(cid),
+
+      supplierById: (id) => data.suppliers.find((s) => s.id === id),
+      bought,
+      paidSupplier,
+      // > 0: the partner still owes the supplier; < 0: paid in advance.
+      supplierBalance: (sid) => bought(sid).amount - paidSupplier(sid),
+
+      saveSupplier: (sp) =>
+        setData((d) => {
+          const row = sp.id ? { ...d.suppliers.find((x) => x.id === sp.id), ...sp } : { active: true, ...sp, id: uid() };
+          const suppliers = sp.id ? d.suppliers.map((x) => (x.id === sp.id ? row : x)) : [...d.suppliers, row];
+          return { ...d, suppliers, queue: enqueue(d.queue, { t: 's', row }) };
+        }),
+
+      // Removes the supplier together with their purchases and payments (on this phone and the server).
+      deleteSupplier: (id) =>
+        setData((d) => {
+          const sp = d.suppliers.find((x) => x.id === id);
+          if (!sp) return d;
+          let queue = enqueue(d.queue, { t: 's', row: { ...sp, deleted: true } });
+          const keep = (list, t) =>
+            list.filter((r) => {
+              if (r.supplierId !== id) return true;
+              queue = enqueue(queue, { t, row: { ...r, deleted: true } });
+              return false;
+            });
+          const purchases = keep(d.purchases, 'b');
+          const supplierPayments = keep(d.supplierPayments, 'sp');
+          return { ...d, suppliers: d.suppliers.filter((x) => x.id !== id), purchases, supplierPayments, queue };
+        }),
+
+      addPurchase: (supplierId, { qty, rate, note = '', date = today() }) => purchaseOps.add({ supplierId, date, qty, rate, note }),
+      updatePurchase: purchaseOps.update,
+      deletePurchase: purchaseOps.remove,
+      addSupplierPayment: (supplierId, { amount, note = '', date = today() }) => supplierPayOps.add({ supplierId, date, amount, note }),
+      updateSupplierPayment: supplierPayOps.update,
+      deleteSupplierPayment: supplierPayOps.remove,
 
       setLang: (lang) => setData((d) => ({ ...d, lang })),
       setUrduFont: (urduFont) => setData((d) => ({ ...d, urduFont })),
