@@ -29,7 +29,9 @@ export default function Suppliers() {
       {adding ? (
         <SupplierForm onDone={() => setAdding(false)} />
       ) : (
-        <button className="btn primary solid wide" onClick={() => setAdding(true)}><Icon name="user-plus" /> {t.addSupplier}</button>
+        data.suppliers.length === 0 && (
+          <button className="btn primary solid wide" onClick={() => setAdding(true)}><Icon name="user-plus" /> {t.addSupplier}</button>
+        )
       )}
       {data.suppliers.length === 0 && !adding && <p className="empty">{t.noSuppliers}</p>}
       {list.map((sp) => (

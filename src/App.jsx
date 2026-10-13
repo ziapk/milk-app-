@@ -8,23 +8,17 @@ import Payments from './screens/Payments';
 import More from './screens/More';
 import Login from './screens/Login';
 import Stats from './screens/Stats';
-import Expenses from './screens/Expenses';
 import Suppliers from './screens/Suppliers';
-import Icon, { BikeIcon } from './Icon';
-import CustomerForm from './screens/CustomerForm';
-import { useBackClose } from './back';
+import Icon from './Icon';
+import QuickAdd, { Fab } from './screens/QuickAdd';
 
-// Daily-use screens sit in the bottom bar; the rest live in the top-right menu.
+// Daily-use screens sit in the bottom bar. The logo opens the summary dashboard and the
+// gear opens settings.
 const TABS = [
   ['today', 'delivery', null],
   ['customers', 'customers', 'users'],
   ['payments', 'payments', 'money-bill-wave'],
-  ['expenses', 'expenses', 'receipt'],
-];
-const MENU = [
-  ['suppliers', 'truck', 'supplierLedger'],
-  ['stats', 'chart-pie'],
-  ['more', 'gear', 'settings'],
+  ['suppliers', 'suppliers', 'truck'],
 ];
 
 export default function App() {
@@ -32,9 +26,7 @@ export default function App() {
   const t = useT();
   const [tab, setTab] = useState('today');
   const [openCustomer, setOpenCustomer] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [adding, setAdding] = useState(false);
-  useBackClose(() => setMenuOpen(false), menuOpen);
+  const [create, setCreate] = useState(null); // what the + button is adding, if anything
 
   useEffect(() => {
     document.documentElement.lang = data.lang;
@@ -44,8 +36,7 @@ export default function App() {
 
   const go = (k) => {
     setOpenCustomer(null);
-    setMenuOpen(false);
-    setAdding(false);
+    setCreate(null);
     setTab(k);
   };
   const pending = data.queue.length > 0;
@@ -53,18 +44,11 @@ export default function App() {
   if (!data.auth) return <Login />;
 
   let screen;
-  if (adding)
-    screen = (
-      <>
-        <h1><Icon name="user-plus" /> {t.addCustomer}</h1>
-        <CustomerForm onDone={() => setAdding(false)} />
-      </>
-    );
+  if (create) screen = <QuickAdd key={create} action={create} onDone={() => setCreate(null)} onSwitch={setCreate} />;
   else if (openCustomer) screen = <CustomerDetail id={openCustomer} onBack={() => setOpenCustomer(null)} />;
   else if (tab === 'today') screen = <Today />;
   else if (tab === 'customers') screen = <Customers onOpen={setOpenCustomer} />;
-  else if (tab === 'payments') screen = <Payments />;
-  else if (tab === 'expenses') screen = <Expenses onOpenSuppliers={() => go('suppliers')} />;
+  else if (tab === 'payments') screen = <Payments onOpenSuppliers={() => go('suppliers')} />;
   else if (tab === 'stats') screen = <Stats />;
   else if (tab === 'suppliers') screen = <Suppliers />;
   else screen = <More />;
@@ -72,16 +56,8 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand"><img src="/logo.png" alt="" /> {t.appName}</div>
-        <button
-          className={`menubtn addcust ${adding ? 'on' : ''}`}
-          aria-label={t.addCustomer}
-          onClick={() => {
-            setMenuOpen(false);
-            setAdding(true);
-          }}
-        >
-          <Icon name="user-plus" />
+        <button className={`brand ${tab === 'stats' && !openCustomer && !create ? 'on' : ''}`} aria-label={t.openDashboard} onClick={() => go('stats')}>
+          <img src="/logo.png" alt="" /> {t.appName}
         </button>
         <button
           className={`menubtn syncbtn ${syncState === 'offline' ? 'off' : pending ? 'pending' : ''}`}
@@ -92,27 +68,16 @@ export default function App() {
           <Icon name={syncState === 'offline' ? 'cloud-arrow-up' : 'rotate'} spin={syncState === 'syncing'} />
           {pending && <i className="count">{data.queue.length > 99 ? '99+' : data.queue.length}</i>}
         </button>
-        <button className="menubtn" aria-label={t.menu} onClick={() => setMenuOpen((o) => !o)}>
-          <Icon name={menuOpen ? 'xmark' : 'bars'} />
+        <button className={`menubtn ${tab === 'more' && !openCustomer && !create ? 'on' : ''}`} aria-label={t.settings} onClick={() => go('more')}>
+          <Icon name="gear" />
         </button>
-        {menuOpen && (
-          <>
-            <div className="menuveil" onClick={() => setMenuOpen(false)} />
-            <div className="menu">
-              {MENU.map(([k, icon, label]) => (
-                <button key={k} className={tab === k && !openCustomer ? 'on' : ''} onClick={() => go(k)}>
-                  <Icon name={icon} /> {t[label || k]}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
       </header>
       <main>{screen}</main>
+      {!create && <Fab onPick={setCreate} />}
       <nav className="tabs">
         {TABS.map(([k, label, icon]) => (
           <button key={k} className={tab === k && !openCustomer ? 'on' : ''} onClick={() => go(k)}>
-            <span className="ico">{icon ? <Icon name={icon} /> : <BikeIcon />}</span>
+            <span className="ico">{icon ? <Icon name={icon} /> : <img className="tablogo" src="/logo.png" alt="" />}</span>
             {t[label]}
           </button>
         ))}

@@ -145,7 +145,7 @@ const num = (n) => Math.round(n * 100) / 100;
 const byCreation = (a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0);
 
 // Milk bought from `supplier` (new), or edit an existing `purchase`.
-function PurchaseBox({ supplier, purchase, onDone }) {
+export function PurchaseBox({ supplier, purchase, onDone }) {
   const { addPurchase, updatePurchase } = useStore();
   const t = useT();
   useBackClose(onDone);

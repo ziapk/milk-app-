@@ -20,7 +20,7 @@ export default function Stats() {
 
   return (
     <>
-      <h1><Icon name="chart-pie" /> {t.stats}</h1>
+      <img className="dashlogo" src="/logo.png" alt={t.stats} />
       <div className="statgrid">
         <div className="stat green"><small><Icon name="sun" /> {t.collectedToday}</small><b>{money(collectedToday)}</b></div>
         <div className="stat green"><small><Icon name="calendar-days" /> {t.collectedMonth}</small><b>{money(collectedMonth)}</b></div>

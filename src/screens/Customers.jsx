@@ -35,7 +35,9 @@ export default function Customers({ onOpen }) {
       {adding ? (
         <CustomerForm onDone={() => setAdding(false)} />
       ) : (
-        <button className="btn primary solid wide" onClick={() => setAdding(true)}><Icon name="user-plus" /> {t.addCustomer}</button>
+        data.customers.length === 0 && (
+          <button className="btn primary solid wide" onClick={() => setAdding(true)}><Icon name="user-plus" /> {t.addCustomer}</button>
+        )
       )}
       {data.customers.length > 0 && <SearchBar value={query} onChange={setQuery} />}
       {query && list.length === 0 && <p className="empty">{t.noMatch}</p>}

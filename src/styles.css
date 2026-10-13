@@ -22,7 +22,7 @@ html[lang='ur'][data-font='gulzar'] body { font-family: 'Gulzar', system-ui, san
 html[lang='ur'][data-font='naskh'] body { font-family: 'Noto Naskh Arabic', system-ui, sans-serif; line-height: 1.6; }
 button, input, a.btn { font: inherit; color: inherit; }
 
-.app { max-width: 560px; margin: 0 auto; min-height: 100vh; padding-bottom: 96px; }
+.app { max-width: 560px; margin: 0 auto; min-height: 100vh; padding-bottom: 170px; }
 main { padding: 12px 16px; }
 h1 { font-size: 26px; margin: 8px 0 14px; }
 h2 { font-size: 20px; margin: 24px 0 8px; color: var(--muted); }
@@ -148,7 +148,11 @@ h1 .fa-solid { color: var(--primary); margin-inline-end: 4px; }
 .form label > span .fa-solid, .stat small .fa-solid { color: var(--muted); }
 .orangetext { color: #f59e0b; }
 .x { color: var(--red); }
-.bikeicon { width: 34px; height: 27px; display: block; }
+/* Delivery tab uses the logo; greyed out unless it's the open tab */
+.tablogo { height: 30px; width: auto; display: block; filter: grayscale(1); opacity: 0.55; }
+.tabs .on .tablogo { filter: none; opacity: 1; }
+/* Dashboard (Summary) shows the logo instead of a title */
+.dashlogo { display: block; width: 180px; height: auto; margin: 4px auto 10px; }
 .iconbtns { flex-direction: row; gap: 40px; }
 .iconbtns .btn { width: 60px; height: 60px; padding: 0; font-size: 28px; }
 .daycard { flex-wrap: wrap; }
@@ -161,7 +165,9 @@ h1 .fa-solid { color: var(--primary); margin-inline-end: 4px; }
   position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
   padding: 8px 16px; padding-top: calc(8px + env(safe-area-inset-top)); background: var(--card); border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; color: var(--primary); }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; color: var(--primary); border: 0; background: none; padding: 4px 6px; border-radius: 12px; cursor: pointer; }
+.brand.on { background: var(--primary-soft); }
+.menubtn.on { background: var(--primary-soft); color: var(--primary); }
 .brand img { height: 34px; width: auto; display: block; }
 .menubtn { position: relative; width: 44px; height: 44px; border: 0; border-radius: 12px; background: #f1f4f8; font-size: 20px; }
 .menubtn .dot { top: 6px; right: 6px; }
@@ -177,19 +183,6 @@ h1 .fa-solid { color: var(--primary); margin-inline-end: 4px; }
   position: absolute; top: -4px; inset-inline-end: -4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px;
   background: #f59e0b; color: #fff; font: 700 11px/18px system-ui, sans-serif; font-style: normal; text-align: center;
 }
-.menuveil { position: fixed; inset: 0; z-index: 1; }
-.menu {
-  position: absolute; top: calc(100% + 6px); inset-inline-end: 12px; z-index: 2; min-width: 200px; background: var(--card);
-  border-radius: 14px; box-shadow: 0 8px 24px #0002; padding: 6px; display: flex; flex-direction: column;
-}
-.menu button {
-  position: relative; display: flex; align-items: center; gap: 12px; border: 0; background: none; text-align: start;
-  padding: 12px 14px; border-radius: 10px; font-size: 17px;
-}
-.menu button .fa-solid { width: 22px; color: var(--muted); }
-.menu button.on { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
-.menu button.on .fa-solid { color: var(--primary); }
-.menu button .dot { position: static; margin-inline-start: auto; }
 
 /* Delivery screen */
 .progress { background: var(--card); border-radius: 14px; padding: 10px 14px; margin: 8px 0 12px; box-shadow: 0 1px 3px #0001; }
@@ -344,3 +337,31 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 .owedcard.red { background: #fdf1f1; }
 .owedcard:active { border-color: var(--red); }
 .owedlink { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--primary); }
+
+/* Floating + button and its action sheet */
+.fab {
+  position: fixed; z-index: 30; inset-inline-end: max(16px, calc(50vw - 264px)); bottom: calc(78px + env(safe-area-inset-bottom));
+  width: 60px; height: 60px; border-radius: 50%; border: 0; background: var(--primary); color: #fff; font-size: 26px;
+  box-shadow: 0 6px 18px #01822f55, 0 2px 4px #0003; transition: transform 0.15s;
+}
+.fab:active { transform: scale(0.94); }
+.fab.open { transform: rotate(45deg); z-index: 41; }
+.fabveil { position: fixed; inset: 0; z-index: 40; background: #02162766; display: flex; align-items: flex-end; justify-content: center; }
+.fabsheet {
+  width: 100%; max-width: 560px; background: var(--card); border-radius: 20px 20px 0 0; padding: 16px 16px calc(150px + env(safe-area-inset-bottom));
+  animation: sheetup 0.18s ease-out;
+}
+@keyframes sheetup { from { transform: translateY(30px); opacity: 0; } }
+.fabtitle { font-weight: 800; font-size: 18px; margin: 0 4px 12px; }
+.fabgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fabitem {
+  display: flex; align-items: center; gap: 10px; padding: 14px 12px; border-radius: 14px; border: 2px solid var(--line);
+  background: #fff; font-weight: 700; font-size: 16px; text-align: start;
+}
+.fabico { width: 40px; height: 40px; flex: none; border-radius: 12px; display: grid; place-items: center; font-size: 18px; background: var(--primary-soft); color: var(--primary); }
+.fabitem.green .fabico { background: #e3f6ec; color: var(--green); }
+.fabitem.red .fabico { background: #fde8e8; color: var(--red); }
+.fabitem:active { border-color: var(--primary); }
+.pickrow { width: 100%; font: inherit; color: inherit; text-align: start; }
+.arrow.ghost { visibility: hidden; }
+.name.center { text-align: center; }
