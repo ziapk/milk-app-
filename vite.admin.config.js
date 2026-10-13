@@ -1,8 +1,10 @@
 // Admin dashboard: a separate small app in admin/, served by the API server at /admin.
 // Dev: npm run admin (http://localhost:5174/admin/) · Build: npm run build:admin
+// In production use the built copy the API server serves at /admin, not a dev server.
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
+import { apiTarget } from './vite.api.js';
 
 export default defineConfig({
   root: path.resolve(import.meta.dirname, 'admin'),
@@ -10,5 +12,5 @@ export default defineConfig({
   publicDir: false,
   plugins: [react()],
   build: { outDir: path.resolve(import.meta.dirname, 'server/admin-dist'), emptyOutDir: true },
-  server: { port: 5174, proxy: { '/api': 'http://localhost:8000' } },
+  server: { port: 5174, proxy: { '/api': apiTarget } },
 });
