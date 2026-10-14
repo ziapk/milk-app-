@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS distributors (
   last_seen_at DATETIME NULL,
   settings TEXT NULL,
   settings_updated_at TIMESTAMP(3) NULL,
+  billing_action VARCHAR(10) NULL,
+  billing_grace_until DATE NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -178,4 +180,33 @@ CREATE TABLE IF NOT EXISTS admin_sessions (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_used_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+);
+
+-- Monthly app fee (subscription), see billing.js. A partner's fee from a month onward, and the
+-- payments admins record against a month ('YYYY-MM').
+CREATE TABLE IF NOT EXISTS billing_fees (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  distributor_id INT NOT NULL,
+  from_month CHAR(7) NOT NULL,
+  fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+  set_by VARCHAR(60) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_billing_fee (distributor_id, from_month),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS billing_payments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  distributor_id INT NOT NULL,
+  month CHAR(7) NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  method VARCHAR(20) NOT NULL DEFAULT 'other',
+  reference VARCHAR(60) NOT NULL DEFAULT '',
+  note VARCHAR(255) NOT NULL DEFAULT '',
+  paid_on DATE NOT NULL,
+  admin_username VARCHAR(60) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_billing_pay_user (distributor_id, month),
+  KEY idx_billing_pay_date (paid_on),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
 );

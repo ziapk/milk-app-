@@ -19,9 +19,10 @@ const KEY = 'doodh-app-v1';
 // supplierPayments: [{ id, supplierId, date, amount, note }]      — money paid to a supplier
 // queue:      changes not yet sent to the server, one per row: [{ t: 'c' | 'd' | 'p' | 'e' | 's' | 'b' | 'sp' | 'pr' | 'sa' | 'cfg', row }]
 // cursor:     server time of the last successful sync
+// billing:    monthly app fee state from the server (see subscriptionState)
 export const MAIN = 'main'; // product id used for the main product in sales and pickers
 const defaultSettings = { delivery: true, shop: false, mainName: '', mainUnit: '', mainPrice: 0 };
-const empty = { settings: defaultSettings, products: [], sales: [], customers: [], deliveries: {}, payments: [], expenses: [], suppliers: [], purchases: [], supplierPayments: [], lang: 'ur', urduFont: 'nastaliq', auth: null, queue: [], cursor: null };
+const empty = { settings: defaultSettings, products: [], sales: [], customers: [], deliveries: {}, payments: [], expenses: [], suppliers: [], purchases: [], supplierPayments: [], lang: 'ur', urduFont: 'nastaliq', auth: null, queue: [], cursor: null, billing: null };
 
 function load() {
   try {
@@ -165,14 +166,38 @@ function mergeFromServer(d, res, pending) {
   const sales = mergeRows(d.sales, res.sales, 'sa', pending, (r) => r).sort(newestFirst);
   const settings = res.settings && !pending.has('cfg') ? { ...defaultSettings, ...res.settings } : d.settings;
 
-  return { ...d, settings, products, sales, customers, deliveries, payments, expenses, suppliers, purchases, supplierPayments, cursor: res.cursor };
+  const billing = res.billing === undefined ? d.billing : res.billing;
+  return { ...d, settings, products, sales, customers, deliveries, payments, expenses, suppliers, purchases, supplierPayments, billing, cursor: res.cursor };
 }
+
+const daysBetween = (from, to) => Math.round((new Date(to + 'T00:00:00') - new Date(from + 'T00:00:00')) / 864e5);
+
+// Monthly app fee, from the last sync and checked against today's date so the reminder and the
+// unpaid action start on time even offline. stage: ok | soon (due in a few days) | due (within
+// grace days) | overdue. block: 'lock' | 'readonly' | null (what the app does about it now).
+export const SOON_DAYS = 5;
+export function subscriptionState(b, day = today()) {
+  if (!b?.dueFrom) return { stage: 'ok', block: null };
+  if (day < b.dueFrom) {
+    const days = daysBetween(day, b.dueFrom);
+    return { stage: days <= SOON_DAYS ? 'soon' : 'ok', block: null, days };
+  }
+  if (day < b.restrictFrom) return { stage: 'due', block: null, days: daysBetween(day, b.restrictFrom) };
+  return { stage: 'overdue', block: b.action === 'lock' || b.action === 'readonly' ? b.action : null };
+}
+
+// Everything that adds, changes or deletes the partner's records; blocked while read-only.
+const WRITES = ['saveSettings', 'saveProduct', 'addSale', 'updateSale', 'deleteSale', 'saveSupplier', 'deleteSupplier',
+  'addPurchase', 'updatePurchase', 'deletePurchase', 'addSupplierPayment', 'updateSupplierPayment', 'deleteSupplierPayment',
+  'saveCustomer', 'deleteCustomer', 'setDelivery', 'giveUsual', 'setExtra', 'markAll', 'updatePayment', 'updateExpense',
+  'addPayment', 'deletePayment', 'addExpense', 'deleteExpense'];
 
 const StoreCtx = createContext(null);
 
 export function StoreProvider({ children }) {
   const [data, setData] = useState(load);
   const [syncState, setSyncState] = useState('idle'); // idle | syncing | ok | offline
+  const [blockedAt, setBlockedAt] = useState(0); // last write refused while read-only (App shows why)
   const dataRef = useRef(data);
   dataRef.current = data;
   const syncing = useRef(false);
@@ -300,10 +325,14 @@ export function StoreProvider({ children }) {
     const saleOps = listOps('sales', 'sa');
     const supplierPayOps = listOps('supplierPayments', 'sp');
 
-    return {
+    const subscription = subscriptionState(data.billing);
+    const ops = {
       data,
       syncState,
       sync,
+      subscription,
+      blockedAt,
+      clearBlocked: () => setBlockedAt(0),
       customerById,
       billed,
       paid,
@@ -533,7 +562,10 @@ export function StoreProvider({ children }) {
           };
         }),
     };
-  }, [data, syncState, sync, logoutLocal]);
+    // Unpaid with read-only on: the partner can look at everything but not add, change or delete.
+    if (subscription.block === 'readonly') for (const k of WRITES) ops[k] = () => setBlockedAt(Date.now());
+    return ops;
+  }, [data, syncState, sync, logoutLocal, blockedAt]);
 
   return <StoreCtx.Provider value={api_}>{children}</StoreCtx.Provider>;
 }

@@ -10,12 +10,14 @@ import Admins from './pages/Admins';
 import Account from './pages/Account';
 import Release from './pages/Release';
 import Support from './pages/Support';
+import Billing from './pages/Billing';
 import AppUpdate from './components/AppUpdate';
 import logo from '../../public/logo.png';
 
 const PAGES = [
   ['overview', 'Overview', 'chart-line'],
   ['users', 'Users', 'users'],
+  ['billing', 'Billing', 'file-invoice-dollar'],
   ['customers', 'Customers', 'house-user'],
   ['suppliers', 'Suppliers', 'truck'],
   ['support', 'Support', 'headset'],
@@ -103,6 +105,7 @@ export default function App() {
           <main>
             {route.page === 'overview' && <Overview />}
             {route.page === 'users' && <Users openId={route.id} />}
+            {route.page === 'billing' && <Billing openId={route.id} />}
             {route.page === 'customers' && <Customers userId={route.id} />}
             {route.page === 'suppliers' && <Suppliers userId={route.id} />}
             {route.page === 'support' && <Support onCount={setOpenTickets} />}

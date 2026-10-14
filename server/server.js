@@ -6,6 +6,7 @@ import syncRoutes from "./routes/syncRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import appRoutes from "./routes/appRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js";
+import billingRoutes from "./routes/billingRoutes.js";
 import { downloadPage } from "./controllers/appController.js";
 import { migrate } from "./migrate.js";
 
@@ -20,6 +21,7 @@ app.use("/api/admin", adminRoutes);
 // In-app updates for the Android app: GET /api/app/latest and /api/app/download
 app.use("/api/app", appRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/billing", billingRoutes);
 
 // Public download page for the Android apps: /download (partner) and /download?app=admin
 app.get("/download", downloadPage);

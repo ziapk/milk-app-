@@ -24,3 +24,14 @@ export const money = (n) => `Rs ${num(Math.round(n))}`;
 
 // 1,234 -> 1.2K for chart ticks
 export const compact = (n) => (n >= 1000 ? `${num(n / 1000, 1)}K` : num(n, 1));
+
+// '2026-11' -> 'Nov 2026'
+export const fmtMonth = (m) =>
+  m ? new Date(`${m}-01T00:00:00`).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '—';
+
+// '2026-11' + 2 -> '2027-01'
+export const addMonth = (m, n) => {
+  const [y, mo] = m.split('-').map(Number);
+  const t = y * 12 + mo - 1 + n;
+  return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, '0')}`;
+};

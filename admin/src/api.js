@@ -79,6 +79,12 @@ const MESSAGES = {
   too_large: "The file is too large",
   no_release: "No release has been published yet",
   empty_message: "Write a reply first",
+  invalid_fee: "Enter a fee of 0 or more and a month",
+  invalid_payment: "Enter an amount more than 0 and a month (up to 2 years ahead)",
+  invalid_billing: "Check the values: grace days 0–60, fee 0 or more",
+  nothing_due: "Those months are already paid",
+  before_start: "That month is before billing started for this partner",
+  cannot_delete_fee: "The first fee can't be removed. Change the fee instead",
 };
 export const errorText = (err) =>
   MESSAGES[err?.code] || "Something went wrong, please try again";

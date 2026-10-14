@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { db } from "../db.js";
 import { SESSION_DAYS } from "./requireAuth.js";
 import { removeUserSupportFiles } from "./supportController.js";
+import { startBilling } from "../billing.js";
 
 const scrypt = promisify(crypto.scrypt);
 const MAX_ATTEMPTS = 5;
@@ -49,6 +50,7 @@ export const register = async (req, res) => {
       `INSERT INTO distributors (phone, name, pin_hash) VALUES (?, ?, ?)`,
       [phone, String(name).trim().slice(0, 100), await hashPin(pin)],
     );
+    await startBilling(result.insertId);
     const token = await newSession(result.insertId);
     res.json({ token, name: String(name).trim(), phone });
   } catch (err) {

@@ -500,3 +500,33 @@ html[dir='rtl'] .composer-field { padding: 4px 14px 4px 6px; }
 .composer-send { flex: none; width: 48px; height: 48px; border: 0; border-radius: 50%; background: var(--primary); color: #fff; font-size: 19px; box-shadow: 0 1px 3px #0003; }
 .composer-send:disabled { background: #9cc9aa; }
 .composer-send:active:not(:disabled) { transform: scale(0.94); }
+
+/* Monthly app fee (subscription) */
+.subbanner {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 8px; padding: 10px 14px;
+  border: 0; border-radius: 14px; font: inherit; font-size: 15px; font-weight: 600; text-align: start; cursor: pointer;
+}
+.subbanner.warn { background: #fff4dc; color: #92400e; }
+.subbanner.bad { background: #fdeaea; color: var(--red); }
+.substatus { display: flex; gap: 14px; align-items: flex-start; }
+.substatus > i { font-size: 28px; margin-top: 4px; }
+.substatus.good { border-color: var(--green); background: #effaf3; }
+.substatus.good > i { color: var(--green); }
+.substatus.warn { border-color: #f59e0b; background: #fff8eb; }
+.substatus.warn > i { color: #f59e0b; }
+.substatus.bad { border-color: var(--red); background: #fdf1f1; }
+.substatus.bad > i { color: var(--red); }
+.subfacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.subfacts small { display: block; color: var(--muted); font-size: 14px; }
+.subfacts b { font-size: 20px; }
+.payinfo { white-space: pre-line; background: #f6f9f7; border-radius: 12px; padding: 10px 12px; margin: 8px 0; font-weight: 600; }
+.sublist { padding: 4px 0; }
+.sublist .row { border-bottom: 1px solid var(--line); }
+.sublist .row:last-child { border-bottom: 0; }
+.subpill { font-size: 13px; font-weight: 700; padding: 0 10px; border-radius: 999px; background: #eef1f3; color: var(--muted); white-space: nowrap; }
+.subpill.paid { background: #e4f3e9; color: var(--green); }
+.subpill.partial { background: #fff4dc; color: #92400e; }
+.subpill.unpaid { background: #fdeaea; color: var(--red); }
+.sublogo { margin: 16px 0 4px; }
+.sublogo img { width: 120px; height: auto; }
+.sublogo b { font-size: 22px; }

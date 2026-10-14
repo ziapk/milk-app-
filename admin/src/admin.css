@@ -345,3 +345,11 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
 .ticket .bubble small { color: var(--muted); font-size: 12px; }
 .ticket .bubble.me small { align-self: flex-end; }
 .chat-more { align-self: center; border: 0; background: none; color: var(--primary); cursor: pointer; font-weight: 600; font-size: 13px; }
+
+/* ---------- billing ---------- */
+.bill-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+.redtext { color: var(--red); }
+.mini-stats b.small-b { font-size: 15px; }
+.facts dd.pre { white-space: pre-line; font-weight: 500; }
+.field .check { font-weight: 400; font-size: 15px; }
+.field input[type='month'], .field input[type='date'] { width: 100%; }

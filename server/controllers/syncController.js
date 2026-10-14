@@ -1,4 +1,5 @@
 import { db } from "../db.js";
+import { partnerBilling } from "../billing.js";
 
 // The phone sends what changed since its last sync and gets back everything the
 // server has that changed since `since`. Pulling a few seconds of overlap means a
@@ -245,5 +246,7 @@ export const sync = async (req, res) => {
     products: outProducts.map((p) => ({ ...p, active: !!p.active })),
     sales: outSales.map((s) => ({ ...s, customerId: s.customerId || null, items: parseJson(s.items, []) })),
     ...(me?.changed && me.settings ? { settings: parseJson(me.settings, null) } : {}),
+    // Monthly app fee state; the app shows reminders and applies the unpaid action from it.
+    billing: await partnerBilling(distributorId),
   });
 };

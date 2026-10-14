@@ -27,6 +27,22 @@ block/unblock, unlock, reset PIN, log out phones, delete; plus adding/removing a
 - **Dev:** `npm run admin` → http://localhost:5174/admin/ (talks to the server on :8000).
 - **Production:** `npm run build` builds the app and the dashboard; the server serves it at `/admin`.
 
+## Subscription billing (monthly app fee)
+
+Partners pay a monthly fee per calendar month; admins record payments by hand (JazzCash, EasyPaisa, bank, cash)
+on the dashboard's **Billing** page. Logic is in `server/billing.js`.
+
+- **Fee per partner:** "Rs X from month M onward". Changing it never rewrites earlier months and replaces any change
+  planned after M. New partners: the month they join is free, then the default fee from Billing settings.
+  Existing partners start free; set each one's fee when you are ready.
+- **Payments:** against a month; part payments add up, several months can be paid at once (advance), "Waived" marks
+  a month paid without counting as income.
+- **Unpaid:** a month is due on the 1st. After the grace days (default 7) the unpaid action applies: lock the app,
+  read-only, or reminders only. Set the default in Billing settings; override it, or give extra time until a date,
+  per partner (Rules). The app shows a reminder 5 days before and during the grace days.
+- The app gets the status with every sync and applies it by date, so it also works offline. Data entered before a
+  lock still syncs. Apps older than this release don't know about billing, so publish the new APK.
+
 ## Admin Android app
 
 `admin-app/` is a separate Android app, **MooPartner Admin** (`com.moopartner.admin`), that opens the

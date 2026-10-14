@@ -211,6 +211,44 @@ export async function migrate() {
   v TEXT NOT NULL
 )`);
 
+  // Monthly app fee (subscription): see billing.js. billing_action / billing_grace_until are
+  // per-partner overrides of the unpaid action and extra time before it applies.
+  if (!(await hasColumn("distributors", "billing_action"))) {
+    await db.query(`ALTER TABLE distributors ADD COLUMN billing_action VARCHAR(10) NULL, ADD COLUMN billing_grace_until DATE NULL`);
+    console.log("migrate: added distributors.billing_action");
+  }
+  await db.query(`CREATE TABLE IF NOT EXISTS billing_fees (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  distributor_id INT NOT NULL,
+  from_month CHAR(7) NOT NULL, -- 'YYYY-MM': this fee applies from this month until the next row
+  fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+  set_by VARCHAR(60) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_billing_fee (distributor_id, from_month),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+)`);
+  await db.query(`CREATE TABLE IF NOT EXISTS billing_payments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  distributor_id INT NOT NULL,
+  month CHAR(7) NOT NULL, -- 'YYYY-MM' the payment is for
+  amount DECIMAL(10,2) NOT NULL,
+  method VARCHAR(20) NOT NULL DEFAULT 'other',
+  reference VARCHAR(60) NOT NULL DEFAULT '',
+  note VARCHAR(255) NOT NULL DEFAULT '',
+  paid_on DATE NOT NULL,
+  admin_username VARCHAR(60) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_billing_pay_user (distributor_id, month),
+  KEY idx_billing_pay_date (paid_on),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+)`);
+  // Partners from before billing (or added some other way) start this month, free.
+  await db.query(
+    `INSERT INTO billing_fees (distributor_id, from_month, fee)
+     SELECT d.id, DATE_FORMAT(CURDATE(), '%Y-%m'), 0 FROM distributors d
+     WHERE NOT EXISTS (SELECT 1 FROM billing_fees f WHERE f.distributor_id = d.id)`,
+  );
+
   // First admin: created once from ADMIN_USER / ADMIN_PASSWORD in .env when there is none yet.
   // After that, admins are managed in the dashboard (or with `npm run create-admin`).
   const [[{ n }]] = await db.query(`SELECT COUNT(*) AS n FROM admins`);

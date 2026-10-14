@@ -2,6 +2,7 @@ import { db } from "../db.js";
 import { hashPin, cleanPhone, validPin } from "./authController.js";
 import { SESSION_DAYS } from "./requireAuth.js";
 import { removeUserSupportFiles } from "./supportController.js";
+import { partnerBilling, startBilling } from "../billing.js";
 
 const userId = (req) => Number(req.params.id);
 const DAYS = 30;
@@ -139,6 +140,7 @@ export const userDetail = async (req, res) => {
     paidMonth: n(p.paidMonth),
     due: n(d.salesAll) - n(p.paidAll),
     lastDelivery: d.lastDelivery,
+    billing: await partnerBilling(id),
   });
 };
 
@@ -177,6 +179,7 @@ export const createUser = async (req, res) => {
     const [r] = await db.execute(`INSERT INTO distributors (phone, name, pin_hash) VALUES (?, ?, ?)`, [
       phone, name, await hashPin(pin),
     ]);
+    await startBilling(r.insertId);
     res.json({ id: r.insertId, name, phone });
   } catch (err) {
     if (err.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "phone_taken" });

@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { useStore } from '../store';
-import { useT } from '../i18n';
+import { money, useT } from '../i18n';
 import Icon from '../Icon';
 import { useBackClose } from '../back';
 import { URDU_FONTS } from '../fonts';
 import { canOpenVoiceSettings, openVoiceSettings, voiceLanguage } from '../search';
 import Products from './Products';
 import Support from './Support';
+import Subscription from './Subscription';
 import { useProducts } from '../products';
 
 export default function More() {
-  const { data, setLang, setUrduFont, logout, logoutOthers, deleteAccount, sync, syncState, saveSettings } = useStore();
+  const { data, subscription, setLang, setUrduFont, logout, logoutOthers, deleteAccount, sync, syncState, saveSettings } = useStore();
   const { main, extras } = useProducts();
   const [productsOpen, setProductsOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [subOpen, setSubOpen] = useState(false);
   const [supportUnread, setSupportUnread] = useState(0); // conversations with a reply not seen yet
   const t = useT();
   const pending = data.queue.length;
@@ -53,6 +55,7 @@ export default function More() {
 
   if (productsOpen) return <Products onBack={() => setProductsOpen(false)} />;
   if (supportOpen) return <Support onBack={() => setSupportOpen(false)} />;
+  if (subOpen) return <Subscription onBack={() => setSubOpen(false)} />;
 
   const modes = data.settings;
   // At least one of delivery / shop stays on.
@@ -68,6 +71,11 @@ export default function More() {
       <button className="btn primary wide helpbtn" onClick={() => setSupportOpen(true)}>
         <Icon name="headset" /> {t.support}
         {supportUnread > 0 && <span className="dotcount">{supportUnread}</span>}
+      </button>
+      <button className="btn wide helpbtn" onClick={() => setSubOpen(true)}>
+        <Icon name="receipt" /> {t.subscription}
+        {data.billing && (data.billing.fee > 0 ? `: ${t.rs} ${money(data.billing.fee)}` : `: ${t.subFree}`)}
+        {subscription.stage !== 'ok' && <span className="dotcount">!</span>}
       </button>
       <div className="card form">
         <div className="name"><Icon name="briefcase" /> {t.business}</div>

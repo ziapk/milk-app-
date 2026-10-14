@@ -12,6 +12,7 @@ import Suppliers from './screens/Suppliers';
 import Shop from './screens/Shop';
 import Icon from './Icon';
 import QuickAdd, { Fab } from './screens/QuickAdd';
+import Subscription, { SubBanner } from './screens/Subscription';
 
 // Daily-use screens sit in the bottom bar. The logo opens the summary dashboard and the
 // gear opens settings.
@@ -24,11 +25,12 @@ const TABS = [
 ];
 
 export default function App() {
-  const { data, sync, syncState } = useStore();
+  const { data, sync, syncState, subscription, blockedAt, clearBlocked } = useStore();
   const t = useT();
   const [tab, setTab] = useState('today');
   const [openCustomer, setOpenCustomer] = useState(null);
   const [create, setCreate] = useState(null); // what the + button is adding, if anything
+  const [subOpen, setSubOpen] = useState(false); // Subscription screen (from the fee reminder)
 
   useEffect(() => {
     document.documentElement.lang = data.lang;
@@ -36,21 +38,35 @@ export default function App() {
     document.documentElement.dataset.font = data.urduFont;
   }, [data.lang, data.urduFont]);
 
+  // A change was refused because the monthly fee is unpaid and read-only is on.
+  useEffect(() => {
+    if (!blockedAt) return;
+    alert(t.subBlockedWrite);
+    clearBlocked();
+  }, [blockedAt]);
+
   const go = (k) => {
     setOpenCustomer(null);
     setCreate(null);
+    setSubOpen(false);
     setTab(k);
   };
   const pending = data.queue.length > 0;
 
   if (!data.auth) return <Login />;
 
+  // Monthly fee overdue with "lock" on: only the subscription screen until it is paid.
+  if (subscription.block === 'lock') {
+    return <div className="app"><main><Subscription locked /></main></div>;
+  }
+
   // Delivery and Shop tabs only show when that business mode is on (Settings > Business).
   const tabs = TABS.filter(([, , , mode]) => !mode || data.settings[mode]);
   const current = tab === 'today' && !data.settings.delivery ? (data.settings.shop ? 'shop' : 'customers') : tab === 'shop' && !data.settings.shop ? 'today' : tab;
 
   let screen;
-  if (create) screen = <QuickAdd key={create} action={create} onDone={() => setCreate(null)} onSwitch={setCreate} />;
+  if (subOpen) screen = <Subscription onBack={() => setSubOpen(false)} />;
+  else if (create) screen = <QuickAdd key={create} action={create} onDone={() => setCreate(null)} onSwitch={setCreate} />;
   else if (openCustomer) screen = <CustomerDetail id={openCustomer} onBack={() => setOpenCustomer(null)} />;
   else if (current === 'today') screen = <Today />;
   else if (current === 'shop') screen = <Shop onNewSale={() => setCreate('sale')} />;
@@ -79,8 +95,11 @@ export default function App() {
           <Icon name="gear" />
         </button>
       </header>
-      <main>{screen}</main>
-      {!create && <Fab onPick={setCreate} />}
+      <main>
+        {!subOpen && <SubBanner onOpen={() => setSubOpen(true)} />}
+        {screen}
+      </main>
+      {!create && !subOpen && subscription.block !== 'readonly' && <Fab onPick={setCreate} />}
       <nav className="tabs">
         {tabs.map(([k, label, icon]) => (
           <button key={k} className={current === k && !openCustomer ? 'on' : ''} onClick={() => go(k)}>

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, errorText } from '../api';
 import { Modal, useUi } from '../components/ui';
 import { StatusBadges } from './Users';
-import { ago, fmtDate, money, num } from '../format';
+import { BillingBadge } from './Billing';
+import { ago, fmtDate, fmtMonth, money, num } from '../format';
 
 // Slide-over with one user's numbers and every action on their account.
 export default function UserPanel({ id, onClose, onChanged }) {
@@ -71,6 +72,15 @@ export default function UserPanel({ id, onClose, onChanged }) {
               <div><dt>Phones logged in</dt><dd>{u.devices}</dd></div>
               <div><dt>Last delivery</dt><dd>{fmtDate(u.lastDelivery)}</dd></div>
             </dl>
+
+            <h3 className="drawer-sub">Subscription</h3>
+            <div className="mini-stats">
+              <div><small>Monthly fee</small><b>{u.billing.fee > 0 ? money(u.billing.fee) : 'Free'}</b>{u.billing.nextFee && <span className="muted small">{money(u.billing.nextFee.fee)} from {fmtMonth(u.billing.nextFee.month)}</span>}</div>
+              <div><small>Status</small><b><BillingBadge b={u.billing} /></b><span className="muted small">{u.billing.outstanding > 0 ? `${money(u.billing.outstanding)} outstanding` : u.billing.paidThrough ? `Paid through ${fmtMonth(u.billing.paidThrough)}` : ''}</span></div>
+            </div>
+            <div className="row-btns">
+              <a className="btn" href={`#/billing/${u.id}`}><i className="fa-solid fa-file-invoice-dollar" /> Fee &amp; payments</a>
+            </div>
 
             <h3 className="drawer-sub">Business</h3>
             <div className="mini-stats">
