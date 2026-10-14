@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import { api, BASE } from '../api';
@@ -152,6 +152,35 @@ function ConversationRow({ k, onOpen }) {
   );
 }
 
+// Pull down at the top of the page to refresh, like a chat app.
+function usePullToRefresh(onRefresh) {
+  const [pull, setPull] = useState(0); // px pulled, shown as the spinner's offset
+  useEffect(() => {
+    let startY = null;
+    let dist = 0;
+    const down = (e) => { startY = window.scrollY <= 0 ? e.touches[0].clientY : null; dist = 0; };
+    const move = (e) => {
+      if (startY === null) return;
+      dist = Math.max(0, e.touches[0].clientY - startY);
+      setPull(Math.min(dist / 2, 70));
+    };
+    const up = () => {
+      if (startY !== null && dist / 2 >= 50) onRefresh();
+      startY = null;
+      setPull(0);
+    };
+    addEventListener('touchstart', down, { passive: true });
+    addEventListener('touchmove', move, { passive: true });
+    addEventListener('touchend', up);
+    return () => {
+      removeEventListener('touchstart', down);
+      removeEventListener('touchmove', move);
+      removeEventListener('touchend', up);
+    };
+  }, [onRefresh]);
+  return pull;
+}
+
 function Thread({ id, token, onBack }) {
   const t = useT();
   useBackClose(onBack);
@@ -160,7 +189,7 @@ function Thread({ id, token, onBack }) {
   const [refreshing, setRefreshing] = useState(false);
   const end = useRef();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setRefreshing(true);
     try {
       setThread(await api(`/support/${id}`, {}, token));
@@ -170,21 +199,29 @@ function Thread({ id, token, onBack }) {
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [id, token]);
+  const pull = usePullToRefresh(load);
+
   useEffect(() => {
     load();
-  }, [id]);
+  }, [load]);
   useEffect(() => {
     end.current?.scrollIntoView({ block: 'end' });
   }, [thread?.messages.length]);
 
   return (
     <>
-      <header className="datebar">
-        <button className="arrow" aria-label={t.cancel} onClick={onBack}><Icon name="arrow-left" flip /></button>
-        <div className="big"><Icon name="comments" /> {t.conversation}</div>
-        <button className="arrow" aria-label={t.refresh} onClick={load} disabled={refreshing}><Icon name="rotate" spin={refreshing} /></button>
-      </header>
+      <div className="pull" style={{ height: refreshing && thread ? 36 : pull }}>
+        {(pull > 0 || (refreshing && thread)) && (
+          <Icon name="rotate" spin={refreshing} className={pull >= 50 ? 'ready' : ''} />
+        )}
+      </div>
+      <div className="thread-top">
+        {thread && <StatusTag status={thread.status} />}
+        <button className="mini-refresh" onClick={load} disabled={refreshing} aria-label={t.refresh}>
+          <Icon name="rotate" spin={refreshing} />
+        </button>
+      </div>
       {error && <div className="error">{error}</div>}
       {!thread && !error && <div className="empty"><Icon name="spinner" spin /></div>}
       {thread && (
@@ -193,8 +230,8 @@ function Thread({ id, token, onBack }) {
             {thread.messages.map((m) => <Bubble key={m.id} m={m} token={token} />)}
           </div>
           {thread.status === 'closed' && <div className="muted center">{t.threadClosed}</div>}
-          <SendForm token={token} ticketId={id} onSent={load} />
           <div ref={end} />
+          <Composer token={token} ticketId={id} onSent={load} />
         </>
       )}
     </>
@@ -268,21 +305,21 @@ function AuthMedia({ name, token, kind, seconds }) {
   );
 }
 
-function SendForm({ token, onSent, ticketId = null }) {
+// Message being written: text, photo, voice note, recording, and sending. Shared by the
+// new-conversation card and the chat composer.
+function useDraft({ token, ticketId, onSent }) {
   const t = useT();
   const [message, setMessage] = useState('');
   const [image, setImage] = useState(null); // { blob, url }
   const [voice, setVoice] = useState(null); // { blob, url, seconds }
   const [recording, setRecording] = useState(0); // seconds while recording, 0 = not recording
   const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState(null); // { text, error }
+  const [error, setError] = useState('');
   const rec = useRef(null);
   const fileInput = useRef();
 
   // Stop the mic and free preview URLs when leaving the screen.
-  useEffect(() => () => {
-    rec.current?.stop();
-  }, []);
+  useEffect(() => () => rec.current?.stop(), []);
   useEffect(() => () => image && URL.revokeObjectURL(image.url), [image]);
   useEffect(() => () => voice && URL.revokeObjectURL(voice.url), [voice]);
 
@@ -294,26 +331,26 @@ function SendForm({ token, onSent, ticketId = null }) {
       const blob = await shrinkImage(file);
       setImage({ blob, url: URL.createObjectURL(blob) });
     } catch {
-      setNote({ text: t.supportBadImage, error: true });
+      setError(t.supportBadImage);
     }
   };
 
   const startRecording = async () => {
-    setNote(null);
+    setError('');
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      return setNote({ text: t.micDenied, error: true });
+      return setError(t.micDenied);
     }
     const type = voiceType();
     const mr = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
     const chunks = [];
     const started = Date.now();
     const timer = setInterval(() => {
-      const s = Math.round((Date.now() - started) / 1000);
-      setRecording(Math.max(s, 1));
-      if (s >= MAX_VOICE_SECONDS) mr.stop();
+      const sec = Math.round((Date.now() - started) / 1000);
+      setRecording(Math.max(sec, 1));
+      if (sec >= MAX_VOICE_SECONDS) mr.stop();
     }, 250);
     mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     mr.onstop = () => {
@@ -332,7 +369,7 @@ function SendForm({ token, onSent, ticketId = null }) {
 
   const send = async () => {
     setBusy(true);
-    setNote(null);
+    setError('');
     try {
       const res = await api(ticketId ? `/support/${ticketId}/reply` : '/support', {
         message,
@@ -345,57 +382,137 @@ function SendForm({ token, onSent, ticketId = null }) {
       setVoice(null);
       onSent(res);
     } catch (e) {
-      setNote({ text: t.errors[e.code] || t.errors.server_error, error: true });
+      setError(t.errors[e.code] || t.errors.server_error);
     } finally {
       setBusy(false);
     }
   };
 
-  const empty = !message.trim() && !image && !voice;
+  return {
+    message, setMessage, image, setImage, voice, setVoice, recording, busy, error, fileInput, pickImage,
+    startRecording, stopRecording: () => rec.current?.stop(), send,
+    canSend: !busy && !recording && (message.trim() || image || voice),
+    canRecord: !!window.MediaRecorder,
+  };
+}
+
+// Photo / voice note waiting to be sent, with a remove button.
+function DraftAttachments({ d }) {
+  const t = useT();
+  return (
+    <>
+      {d.image && (
+        <div className="attach">
+          <img src={d.image.url} alt="" />
+          <button className="btn red compact" onClick={() => d.setImage(null)} disabled={d.busy} aria-label={t.remove}><Icon name="trash" /></button>
+        </div>
+      )}
+      {d.voice && (
+        <div className="attach">
+          <audio src={d.voice.url} controls />
+          <button className="btn red compact" onClick={() => d.setVoice(null)} disabled={d.busy} aria-label={t.remove}><Icon name="trash" /></button>
+        </div>
+      )}
+    </>
+  );
+}
+
+// First message of a new conversation.
+function SendForm({ token, onSent }) {
+  const t = useT();
+  const d = useDraft({ token, onSent });
   return (
     <div className="card form">
-      {!ticketId && (
-        <>
-          <div className="name"><Icon name="comment-dots" /> {t.supportSend}</div>
-          <div className="muted">{t.supportSendHelp}</div>
-        </>
-      )}
-      <textarea className="supportbox" dir="auto" rows={ticketId ? 2 : 4} maxLength={4000} value={message} onChange={(e) => setMessage(e.target.value)}
-        placeholder={ticketId ? t.replyPlaceholder : t.supportPlaceholder} disabled={busy} />
-
-      {image && (
-        <div className="attach">
-          <img src={image.url} alt="" />
-          <button className="btn red compact" onClick={() => setImage(null)} disabled={busy} aria-label={t.remove}><Icon name="trash" /></button>
-        </div>
-      )}
-      {voice && (
-        <div className="attach">
-          <audio src={voice.url} controls />
-          <button className="btn red compact" onClick={() => setVoice(null)} disabled={busy} aria-label={t.remove}><Icon name="trash" /></button>
-        </div>
-      )}
-
-      {recording ? (
-        <button className="btn red solid wide recording" onClick={() => rec.current?.stop()}>
-          <Icon name="stop" /> {t.stopRecording} <b dir="ltr">{clock(recording)} / {clock(MAX_VOICE_SECONDS)}</b>
+      <div className="name"><Icon name="comment-dots" /> {t.supportSend}</div>
+      <div className="muted">{t.supportSendHelp}</div>
+      <textarea className="supportbox" dir="auto" rows={4} maxLength={4000} value={d.message} onChange={(e) => d.setMessage(e.target.value)}
+        placeholder={t.supportPlaceholder} disabled={d.busy} />
+      <DraftAttachments d={d} />
+      {d.recording ? (
+        <button className="btn red solid wide recording" onClick={d.stopRecording}>
+          <Icon name="stop" /> {t.stopRecording} <b dir="ltr">{clock(d.recording)} / {clock(MAX_VOICE_SECONDS)}</b>
         </button>
       ) : (
         <div className="two">
-          <button className="btn" onClick={() => fileInput.current.click()} disabled={busy}>
-            <Icon name="camera" /> {image ? t.changePhoto : t.addPhoto}
+          <button className="btn" onClick={() => d.fileInput.current.click()} disabled={d.busy}>
+            <Icon name="camera" /> {d.image ? t.changePhoto : t.addPhoto}
           </button>
-          <button className="btn" onClick={startRecording} disabled={busy || !window.MediaRecorder}>
-            <Icon name="microphone" /> {voice ? t.recordAgain : t.recordVoice}
+          <button className="btn" onClick={d.startRecording} disabled={d.busy || !d.canRecord}>
+            <Icon name="microphone" /> {d.voice ? t.recordAgain : t.recordVoice}
           </button>
         </div>
       )}
-      <input ref={fileInput} type="file" accept="image/*" hidden onChange={pickImage} />
-
-      {note && <div className={note.error ? 'error' : 'muted greentext'}>{note.text}</div>}
-      <button className="btn primary solid wide" onClick={send} disabled={busy || empty || !!recording}>
-        <Icon name={busy ? 'spinner' : 'paper-plane'} spin={busy} flip={!busy} /> {t.send}
+      <input ref={d.fileInput} type="file" accept="image/*" hidden onChange={d.pickImage} />
+      {d.error && <div className="error">{d.error}</div>}
+      <button className="btn primary solid wide" onClick={d.send} disabled={!d.canSend}>
+        <Icon name={d.busy ? 'spinner' : 'paper-plane'} spin={d.busy} flip={!d.busy} /> {t.send}
       </button>
     </div>
+  );
+}
+
+// WhatsApp-style bar fixed above the tab bar: one field with photo and mic icons inside, and a
+// round send button. Renders a spacer of its own height so the chat can scroll above it.
+function Composer({ token, ticketId, onSent }) {
+  const t = useT();
+  const d = useDraft({ token, ticketId, onSent });
+  const bar = useRef();
+  const input = useRef();
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    const tabs = document.querySelector('.tabs');
+    const place = () => {
+      bar.current.style.bottom = `${tabs?.offsetHeight || 0}px`;
+      setHeight(bar.current.offsetHeight);
+    };
+    const ro = new ResizeObserver(place);
+    ro.observe(bar.current);
+    if (tabs) ro.observe(tabs);
+    return () => ro.disconnect();
+  }, []);
+
+  // Grow with the text, up to about 5 lines.
+  useEffect(() => {
+    const el = input.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+  }, [d.message]);
+
+  return (
+    <>
+      <div style={{ height }} />
+      <div className="composer" ref={bar}>
+        {(d.image || d.voice) && <div className="composer-files"><DraftAttachments d={d} /></div>}
+        {d.error && <div className="composer-error">{d.error}</div>}
+        <div className="composer-row">
+          <div className={`composer-field ${d.recording ? 'rec' : ''}`}>
+            {d.recording ? (
+              <>
+                <span className="rec-dot" />
+                <span className="rec-time" dir="ltr">{clock(d.recording)} / {clock(MAX_VOICE_SECONDS)}</span>
+                <button className="composer-icon red" onClick={d.stopRecording} aria-label={t.stopRecording}><Icon name="stop" /></button>
+              </>
+            ) : (
+              <>
+                <textarea ref={input} rows={1} dir="auto" maxLength={4000} value={d.message} disabled={d.busy}
+                  onChange={(e) => d.setMessage(e.target.value)} placeholder={t.replyPlaceholder} />
+                <button className="composer-icon" onClick={() => d.fileInput.current.click()} disabled={d.busy} aria-label={t.addPhoto}>
+                  <Icon name="paperclip" />
+                </button>
+                <button className="composer-icon" onClick={d.startRecording} disabled={d.busy || !d.canRecord} aria-label={t.recordVoice}>
+                  <Icon name="microphone" />
+                </button>
+              </>
+            )}
+          </div>
+          <button className="composer-send" onClick={d.send} disabled={!d.canSend} aria-label={t.send}>
+            <Icon name={d.busy ? 'spinner' : 'paper-plane'} spin={d.busy} flip={!d.busy} />
+          </button>
+        </div>
+        <input ref={d.fileInput} type="file" accept="image/*" hidden onChange={d.pickImage} />
+      </div>
+    </>
   );
 }
