@@ -8,6 +8,8 @@ import Customers from './pages/Customers';
 import Suppliers from './pages/Suppliers';
 import Admins from './pages/Admins';
 import Account from './pages/Account';
+import Release from './pages/Release';
+import AppUpdate from './components/AppUpdate';
 import logo from '../../public/logo.png';
 
 const PAGES = [
@@ -16,6 +18,7 @@ const PAGES = [
   ['customers', 'Customers', 'house-user'],
   ['suppliers', 'Suppliers', 'truck'],
   ['admins', 'Admins', 'user-shield'],
+  ['release', 'App release', 'mobile-screen-button'],
   ['account', 'My account', 'circle-user'],
 ];
 
@@ -43,7 +46,7 @@ export default function App() {
   }, []);
 
   if (admin === undefined) return <div className="boot"><i className="fa-solid fa-spinner fa-spin" /></div>;
-  if (!admin) return <UiProvider><Login onLogin={setAdmin} /></UiProvider>;
+  if (!admin) return <UiProvider><Login onLogin={setAdmin} /><AppUpdate /></UiProvider>;
 
   const logout = async () => {
     await api('/logout', { method: 'POST' }).catch(() => {});
@@ -96,10 +99,12 @@ export default function App() {
             {route.page === 'customers' && <Customers userId={route.id} />}
             {route.page === 'suppliers' && <Suppliers userId={route.id} />}
             {route.page === 'admins' && <Admins />}
+            {route.page === 'release' && <Release />}
             {route.page === 'account' && <Account admin={admin} />}
           </main>
         </div>
       </div>
+      <AppUpdate />
     </UiProvider>
   );
 }

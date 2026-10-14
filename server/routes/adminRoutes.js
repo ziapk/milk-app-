@@ -4,6 +4,7 @@ import { overview, listUsers, createUser, userDetail, setDisabled, unlock, reset
   listSuppliers, createSupplier, updateSupplier, supplierLedger } from "../controllers/adminController.js";
 import { login, logout, me, changePassword, listAdmins, createAdmin, deleteAdmin } from "../controllers/adminAuthController.js";
 import { requireAdmin } from "../controllers/requireAdmin.js";
+import { currentRelease, uploadRelease, updateRelease } from "../controllers/appController.js";
 
 const router = express.Router();
 
@@ -43,5 +44,10 @@ router.get("/users/:id/suppliers/:supplierId/ledger", supplierLedger);
 router.get("/admins", listAdmins);
 router.post("/admins", createAdmin);
 router.delete("/admins/:id", deleteAdmin);
+
+// Android app release (in-app updates): body of the POST is the raw APK file.
+router.get("/release", currentRelease);
+router.post("/release", uploadRelease);
+router.put("/release/:app", updateRelease);
 
 export default router;

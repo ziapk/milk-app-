@@ -40,3 +40,6 @@ Thumbs.db
 coverage/
 .cache/
 *.tsbuildinfo
+
+# Published APK + latest.json for in-app updates (uploaded from the admin dashboard)
+server/releases/

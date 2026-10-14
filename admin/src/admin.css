@@ -302,3 +302,21 @@ main { padding: 12px 28px 48px; max-width: 1200px; }
   .facts, .mini-stats { grid-template-columns: 1fr 1fr; }
 }
 .table td.r { white-space: nowrap; }
+
+/* App release page */
+.field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font: inherit; resize: vertical; }
+.field textarea:focus { outline: 3px solid var(--primary-soft); border-color: var(--primary); }
+.release-notes { white-space: pre-line; background: #f6f9f7; border-radius: 10px; padding: 10px 12px; margin: 12px 0 0; }
+.progress { height: 8px; border-radius: 4px; background: var(--primary-soft); overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--primary); transition: width 0.2s; }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.release-help { margin: 0 0 14px; padding-left: 18px; font-size: 13px; line-height: 1.7; }
+.release-help code { word-break: break-all; }
+.app-update { text-align: center; }
+.app-update > .fa-circle-arrow-up { font-size: 40px; color: var(--primary); }
+.app-update .modal-actions { justify-content: center; }
+.app-update .progress { margin: 12px 0; }
+.share-link { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 8px 8px 12px; background: #f6f9f7; border-radius: 10px; font-size: 14px; }
+.share-link > i { color: var(--primary); }
+.share-link a { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--primary-dark); font-weight: 600; }
+.share-link .btn { padding: 6px 10px; font-size: 13px; }

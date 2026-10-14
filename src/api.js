@@ -1,5 +1,5 @@
 // In dev, Vite proxies /api to the Express server. For a separate API host set VITE_API_URL.
-const BASE = import.meta.env.VITE_API_URL || '/api';
+export const BASE = import.meta.env.VITE_API_URL || '/api';
 
 export class ApiError extends Error {
   constructor(status, code) {

@@ -34,6 +34,27 @@ export async function api(path, { method = "GET", body } = {}) {
   return data;
 }
 
+// Sends a file as the raw request body. XHR (not fetch) so the upload can report progress.
+export function uploadFile(path, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${BASE}/admin${path}`);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader("X-Admin", "1");
+    xhr.setRequestHeader("Content-Type", "application/octet-stream");
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress?.(Math.round((e.loaded / e.total) * 100));
+    xhr.onload = () => {
+      let data = {};
+      try { data = JSON.parse(xhr.responseText); } catch {}
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(data);
+      if (xhr.status === 401) onUnauthorized();
+      reject(new ApiError(xhr.status, data.error || "server_error"));
+    };
+    xhr.onerror = () => reject(new ApiError(0, "offline"));
+    xhr.send(file);
+  });
+}
+
 const MESSAGES = {
   wrong_login: "Wrong username or password",
   locked: "Too many wrong tries. Try again in 15 minutes",
@@ -51,6 +72,12 @@ const MESSAGES = {
   cannot_delete_self: "You can't delete your own account",
   not_found: "Not found — it may have been deleted",
   offline: "Cannot reach the server",
+  not_apk: "That file is not a valid APK",
+  wrong_app: "That APK is not the Partner app or the Admin app",
+  debug_build: "That is a debug build. Upload the release APK",
+  not_newer: "That version is not newer than the published one. Bump the version and build again",
+  too_large: "The file is too large",
+  no_release: "No release has been published yet",
 };
 export const errorText = (err) =>
   MESSAGES[err?.code] || "Something went wrong, please try again";

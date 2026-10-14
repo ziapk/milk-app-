@@ -429,3 +429,15 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 .form .buyrow input.qtyin { flex: 1; min-width: 0; text-align: center; font-size: 24px; font-weight: 800; padding: 8px; }
 .form .buyrow input.ratein { width: 84px; flex: none; text-align: center; font-size: 18px; padding: 8px 4px; }
 .buyrow .at { color: var(--muted); font-weight: 700; }
+
+/* In-app update (Android, outside the Play Store) */
+.update-wrap { position: fixed; inset: 0; z-index: 60; background: #0f1720cc; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.update { width: 100%; max-width: 420px; text-align: center; padding: 22px 18px; }
+.update h2 { color: var(--text); margin: 8px 0 4px; }
+.update-icon { font-size: 44px; color: var(--primary); }
+.update-notes { white-space: pre-line; font-size: 16px; }
+.update-error { color: var(--red); font-size: 15px; }
+.update-bar { height: 8px; border-radius: 4px; background: var(--primary-soft); overflow: hidden; margin: 12px 0 4px; }
+.update-bar i { display: block; height: 100%; background: var(--primary); transition: width 0.2s; }
+.update-bar i.indeterminate { animation: update-pulse 1.2s ease-in-out infinite; }
+@keyframes update-pulse { 50% { opacity: 0.4; } }

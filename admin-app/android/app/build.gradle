@@ -36,6 +36,8 @@ android {
             }
         }
     }
+    // In-app updater shared with the partner app (AppUpdatePlugin).
+    sourceSets { main.java.srcDirs += '../../../android-shared/java' }
     buildTypes {
         release {
             if (keystorePropsFile.exists()) signingConfig signingConfigs.release

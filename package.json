@@ -15,6 +15,7 @@
     "aab": "vite build --mode android && cap sync android && cd android && ./gradlew bundleRelease",
     "admin:apk": "cd admin-app && cap sync android && cd android && ./gradlew assembleRelease",
     "admin:apk:debug": "cd admin-app && cap sync android && cd android && ./gradlew assembleDebug",
+    "admin:bump": "cd admin-app && npm version patch --no-git-tag-version",
     "bump": "npm version patch --no-git-tag-version"
   },
   "dependencies": {

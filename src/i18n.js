@@ -202,6 +202,16 @@ const dict = {
     purchaseLine: (q, u, n, r) => `${q} ${u} ${n} × ${r} روپے`,
     whatBought: 'کیا خریدا؟',
     cat: { feed: 'چارہ', fuel: 'پیٹرول', animal: 'جانور', salary: 'تنخواہ', other: 'دیگر' },
+    updateAvailable: 'نیا ورژن آ گیا ہے',
+    updateRequired: 'اپ ڈیٹ ضروری ہے',
+    updateVersion: (v) => `ورژن ${v}`,
+    updateForcedText: 'ایپ چلانے کے لیے پہلے اپ ڈیٹ کریں۔',
+    updatePermission: 'ترتیبات میں "اس ذریعے سے اجازت دیں" آن کریں، پھر واپس آئیں۔',
+    updateFailed: 'ڈاؤن لوڈ نہیں ہو سکا۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔',
+    updateDownloading: 'ڈاؤن لوڈ ہو رہا ہے',
+    updateNow: 'ابھی اپ ڈیٹ کریں',
+    updateLater: 'بعد میں',
+    retry: 'دوبارہ کوشش کریں',
     // l = what was delivered, e.g. "60 لیٹر دودھ"
     billText: (c, m, l, a, due) =>
       `السلام علیکم ${c}\n${m}: ${l}\nرقم: ${a} روپے\nکل بقایا: ${due} روپے\nشکریہ`,
@@ -407,6 +417,16 @@ const dict = {
     purchaseLine: (q, u, n, r) => `${q} ${u} ${n} × Rs ${r}`,
     whatBought: 'What did you buy?',
     cat: { feed: 'Feed', fuel: 'Fuel', animal: 'Animal', salary: 'Salary', other: 'Other' },
+    updateAvailable: 'New version available',
+    updateRequired: 'Update required',
+    updateVersion: (v) => `Version ${v}`,
+    updateForcedText: 'Please update to keep using the app.',
+    updatePermission: 'Turn on "Allow from this source" in settings, then come back.',
+    updateFailed: 'Download failed. Check your internet and try again.',
+    updateDownloading: 'Downloading',
+    updateNow: 'Update now',
+    updateLater: 'Later',
+    retry: 'Try again',
     // l = what was delivered, e.g. "60 litre milk"
     billText: (c, m, l, a, due) =>
       `Assalam o Alaikum ${c}\n${m}: ${l}\nAmount: Rs ${a}\nTotal due: Rs ${due}\nThank you`,
