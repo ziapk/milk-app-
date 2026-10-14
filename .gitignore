@@ -43,3 +43,6 @@ coverage/
 
 # Published APK + latest.json for in-app updates (uploaded from the admin dashboard)
 server/releases/
+
+# Support attachments (photos, voice notes) sent from the app
+server/uploads/

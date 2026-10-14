@@ -6,12 +6,14 @@ import { useBackClose } from '../back';
 import { URDU_FONTS } from '../fonts';
 import { canOpenVoiceSettings, openVoiceSettings, voiceLanguage } from '../search';
 import Products from './Products';
+import Support from './Support';
 import { useProducts } from '../products';
 
 export default function More() {
   const { data, setLang, setUrduFont, logout, logoutOthers, deleteAccount, sync, syncState, saveSettings } = useStore();
   const { main, extras } = useProducts();
   const [productsOpen, setProductsOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const t = useT();
   const pending = data.queue.length;
   const [note, setNote] = useState('');
@@ -43,6 +45,7 @@ export default function More() {
   };
 
   if (productsOpen) return <Products onBack={() => setProductsOpen(false)} />;
+  if (supportOpen) return <Support onBack={() => setSupportOpen(false)} />;
 
   const modes = data.settings;
   // At least one of delivery / shop stays on.
@@ -55,6 +58,9 @@ export default function More() {
   return (
     <>
       <h1><Icon name="gear" /> {t.settings}</h1>
+      <button className="btn primary wide helpbtn" onClick={() => setSupportOpen(true)}>
+        <Icon name="headset" /> {t.support}
+      </button>
       <div className="card form">
         <div className="name"><Icon name="briefcase" /> {t.business}</div>
         <div className="muted">{t.businessHelp}</div>

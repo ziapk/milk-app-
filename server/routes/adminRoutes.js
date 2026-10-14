@@ -5,8 +5,13 @@ import { overview, listUsers, createUser, userDetail, setDisabled, unlock, reset
 import { login, logout, me, changePassword, listAdmins, createAdmin, deleteAdmin } from "../controllers/adminAuthController.js";
 import { requireAdmin } from "../controllers/requireAdmin.js";
 import { currentRelease, uploadRelease, updateRelease } from "../controllers/appController.js";
+import { adminTickets, adminFile, replyTicket, setTicketStatus, deleteTicket, getContact, saveContact } from "../controllers/supportController.js";
 
 const router = express.Router();
+
+// Support attachments load in <img>/<audio>, which can't send the X-Admin header. Read-only, so
+// the session cookie alone is enough.
+router.get("/support/files/:name", requireAdmin, adminFile);
 
 // Extra CSRF guard on top of the SameSite cookie: other sites can't add a custom header
 // to a request without CORS permission.
@@ -49,5 +54,12 @@ router.delete("/admins/:id", deleteAdmin);
 router.get("/release", currentRelease);
 router.post("/release", uploadRelease);
 router.put("/release/:app", updateRelease);
+
+router.get("/support", adminTickets);
+router.post("/support/:id/reply", replyTicket);
+router.post("/support/:id/status", setTicketStatus);
+router.delete("/support/:id", deleteTicket);
+router.get("/support-contact", getContact);
+router.put("/support-contact", saveContact);
 
 export default router;

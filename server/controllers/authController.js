@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { promisify } from "node:util";
 import { db } from "../db.js";
 import { SESSION_DAYS } from "./requireAuth.js";
+import { removeUserSupportFiles } from "./supportController.js";
 
 const scrypt = promisify(crypto.scrypt);
 const MAX_ATTEMPTS = 5;
@@ -109,6 +110,7 @@ export const deleteAccount = async (req, res) => {
   if (!rows[0] || !validPin(req.body?.pin) || !(await checkPin(req.body.pin, rows[0].pin_hash))) {
     return res.status(401).json({ error: "wrong_pin" });
   }
+  await removeUserSupportFiles(req.distributorId);
   await db.execute(`DELETE FROM distributors WHERE id = ?`, [req.distributorId]);
   res.json({ status: true });
 };

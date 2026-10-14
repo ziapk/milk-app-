@@ -149,6 +149,31 @@ export async function migrate() {
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 )`);
 
+  // Help & Support: messages from users (text, photo, voice note) and the admin's reply.
+  // Attachments are files in server/uploads/support; the row keeps only their names.
+  await db.query(`CREATE TABLE IF NOT EXISTS support_tickets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  distributor_id INT NOT NULL,
+  message TEXT NOT NULL,
+  image VARCHAR(40) NULL,
+  voice VARCHAR(40) NULL,
+  voice_seconds SMALLINT NULL,
+  app_version VARCHAR(20) NOT NULL DEFAULT '',
+  status VARCHAR(10) NOT NULL DEFAULT 'open',
+  reply TEXT NULL,
+  replied_at DATETIME NULL,
+  replied_by VARCHAR(60) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_support_user (distributor_id, created_at),
+  KEY idx_support_status (status, created_at),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+)`);
+  // Small key/value settings edited in the dashboard (support phone, email, WhatsApp).
+  await db.query(`CREATE TABLE IF NOT EXISTS app_settings (
+  k VARCHAR(40) PRIMARY KEY,
+  v TEXT NOT NULL
+)`);
+
   // First admin: created once from ADMIN_USER / ADMIN_PASSWORD in .env when there is none yet.
   // After that, admins are managed in the dashboard (or with `npm run create-admin`).
   const [[{ n }]] = await db.query(`SELECT COUNT(*) AS n FROM admins`);

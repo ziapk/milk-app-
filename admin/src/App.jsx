@@ -9,6 +9,7 @@ import Suppliers from './pages/Suppliers';
 import Admins from './pages/Admins';
 import Account from './pages/Account';
 import Release from './pages/Release';
+import Support from './pages/Support';
 import AppUpdate from './components/AppUpdate';
 import logo from '../../public/logo.png';
 
@@ -17,6 +18,7 @@ const PAGES = [
   ['users', 'Users', 'users'],
   ['customers', 'Customers', 'house-user'],
   ['suppliers', 'Suppliers', 'truck'],
+  ['support', 'Support', 'headset'],
   ['admins', 'Admins', 'user-shield'],
   ['release', 'App release', 'mobile-screen-button'],
   ['account', 'My account', 'circle-user'],
@@ -33,10 +35,14 @@ export default function App() {
   const [admin, setAdmin] = useState(undefined); // undefined = checking, null = logged out
   const [route, setRoute] = useState(readRoute);
   const [navOpen, setNavOpen] = useState(false);
+  const [openTickets, setOpenTickets] = useState(0); // badge on the Support link
 
   useEffect(() => {
     setUnauthorizedHandler(() => setAdmin(null));
-    api('/me').then(setAdmin, () => setAdmin(null));
+    api('/me').then((me) => {
+      setAdmin(me);
+      api('/support?status=open').then((r) => setOpenTickets(r.counts.open), () => {});
+    }, () => setAdmin(null));
     const onHash = () => {
       setRoute(readRoute());
       setNavOpen(false);
@@ -69,6 +75,7 @@ export default function App() {
             {PAGES.map(([k, label, icon]) => (
               <a key={k} href={`#/${k}`} className={route.page === k ? 'on' : ''}>
                 <i className={`fa-solid fa-${icon}`} /> {label}
+                {k === 'support' && openTickets > 0 && <span className="nav-count">{openTickets}</span>}
               </a>
             ))}
           </nav>
@@ -98,6 +105,7 @@ export default function App() {
             {route.page === 'users' && <Users openId={route.id} />}
             {route.page === 'customers' && <Customers userId={route.id} />}
             {route.page === 'suppliers' && <Suppliers userId={route.id} />}
+            {route.page === 'support' && <Support onCount={setOpenTickets} />}
             {route.page === 'admins' && <Admins />}
             {route.page === 'release' && <Release />}
             {route.page === 'account' && <Account admin={admin} />}

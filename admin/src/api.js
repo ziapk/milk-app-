@@ -78,6 +78,7 @@ const MESSAGES = {
   not_newer: "That version is not newer than the published one. Bump the version and build again",
   too_large: "The file is too large",
   no_release: "No release has been published yet",
+  empty_message: "Write a reply first",
 };
 export const errorText = (err) =>
   MESSAGES[err?.code] || "Something went wrong, please try again";

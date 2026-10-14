@@ -441,3 +441,21 @@ html[lang='ur'] :is(.btn, .linkbtn, .menu button, h1, .name, .stat small, .form 
 .update-bar i { display: block; height: 100%; background: var(--primary); transition: width 0.2s; }
 .update-bar i.indeterminate { animation: update-pulse 1.2s ease-in-out infinite; }
 @keyframes update-pulse { 50% { opacity: 0.4; } }
+
+/* Help & Support */
+.helpbtn { margin: 0 0 4px; }
+.helplink { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px auto 0; font-size: 17px; }
+a.contactbtn { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+a.contactbtn b { margin-inline-start: auto; font-size: 16px; }
+.supportbox { width: 100%; padding: 12px; border: 2px solid var(--line); border-radius: 12px; font: inherit; font-size: 18px; resize: vertical; background: #fff; }
+.supportbox:focus { outline: none; border-color: var(--primary); }
+.attach { display: flex; align-items: center; gap: 10px; }
+.attach img { max-height: 140px; max-width: 70%; border-radius: 10px; }
+.attach audio { flex: 1; min-width: 0; }
+.recording { animation: update-pulse 1.2s ease-in-out infinite; }
+.recording b { margin-inline-start: 6px; }
+.ticket-head { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; flex-wrap: wrap; }
+.ticket-text { white-space: pre-line; margin: 6px 0; }
+.ticket-reply { background: var(--primary-soft); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
+.ticket-reply b { color: var(--primary-dark); font-size: 15px; }
+.ticket-reply p { white-space: pre-line; margin: 4px 0 0; }

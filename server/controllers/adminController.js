@@ -1,6 +1,7 @@
 import { db } from "../db.js";
 import { hashPin, cleanPhone, validPin } from "./authController.js";
 import { SESSION_DAYS } from "./requireAuth.js";
+import { removeUserSupportFiles } from "./supportController.js";
 
 const userId = (req) => Number(req.params.id);
 const DAYS = 30;
@@ -216,6 +217,7 @@ export const logoutAll = async (req, res) => {
 
 // Every data table cascades from distributors, so this removes all of the user's records.
 export const deleteUser = async (req, res) => {
+  await removeUserSupportFiles(userId(req));
   const [r] = await db.execute(`DELETE FROM distributors WHERE id = ?`, [userId(req)]);
   if (!r.affectedRows) return res.status(404).json({ error: "not_found" });
   res.json({ status: true });

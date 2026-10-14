@@ -3,6 +3,7 @@ import { useStore } from '../store';
 import { useT } from '../i18n';
 import { api } from '../api';
 import Icon from '../Icon';
+import Support from './Support';
 
 export default function Login() {
   const { data, setAuth, setLang } = useStore();
@@ -11,6 +12,7 @@ export default function Login() {
   const [f, setF] = useState({ name: '', phone: '', pin: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [help, setHelp] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: k === 'name' ? e.target.value : e.target.value.replace(/\D/g, '') });
 
   const submit = async (e) => {
@@ -26,6 +28,8 @@ export default function Login() {
       setBusy(false);
     }
   };
+
+  if (help) return <main className="login"><Support contactOnly onBack={() => setHelp(false)} /></main>;
 
   return (
     <main className="login">
@@ -45,6 +49,7 @@ export default function Login() {
         <button className={`btn ${data.lang === 'ur' ? 'primary solid' : ''}`} onClick={() => setLang('ur')}>اردو</button>
         <button className={`btn ${data.lang === 'en' ? 'primary solid' : ''}`} onClick={() => setLang('en')}>English</button>
       </div>
+      <button className="linkbtn primary helplink" onClick={() => setHelp(true)}><Icon name="headset" /> {t.support}</button>
     </main>
   );
 }
