@@ -1,5 +1,5 @@
 import express from "express";
-import { contact, createTicket, myTickets } from "../controllers/supportController.js";
+import { contact, createTicket, myTickets, myThread, userReply, myFile } from "../controllers/supportController.js";
 import { requireAuth } from "../controllers/requireAuth.js";
 
 const router = express.Router();
@@ -8,5 +8,8 @@ const router = express.Router();
 router.post("/contact", contact); // public: also shown on the login screen
 router.post("/", requireAuth, createTicket);
 router.post("/mine", requireAuth, myTickets);
+router.post("/file", requireAuth, myFile);
+router.post("/:id", requireAuth, myThread);
+router.post("/:id/reply", requireAuth, userReply);
 
 export default router;

@@ -25,6 +25,7 @@ export default function Support({ onCount }) {
   const [list, setList] = useState(null);
   const [counts, setCounts] = useState({});
   const [photo, setPhoto] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = () =>
     api(`/support${filter ? `?status=${filter}` : ''}`).then((r) => {
@@ -38,6 +39,12 @@ export default function Support({ onCount }) {
     load();
   }, [filter]);
 
+  const refresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
+
   return (
     <div className="narrow wide-ish">
       <ContactPanel />
@@ -49,9 +56,12 @@ export default function Support({ onCount }) {
             </button>
           ))}
         </div>
+        <button className="btn" onClick={refresh} disabled={refreshing}>
+          <i className={`fa-solid fa-rotate ${refreshing ? 'fa-spin' : ''}`} /> Refresh
+        </button>
       </div>
       {list === null && <p className="empty"><i className="fa-solid fa-spinner fa-spin" /></p>}
-      {list?.length === 0 && <p className="empty">No messages here.</p>}
+      {list?.length === 0 && <p className="empty">No conversations here.</p>}
       {list?.map((k) => <Ticket key={k.id} k={k} onChanged={load} onPhoto={setPhoto} />)}
       {photo && (
         <Modal title="Photo" onClose={() => setPhoto(null)}>
@@ -66,11 +76,15 @@ export default function Support({ onCount }) {
   );
 }
 
+const SHOW_LAST = 4; // older messages fold behind "Show earlier"
+
 function Ticket({ k, onChanged, onPhoto }) {
   const { notify, confirm } = useUi();
   const [reply, setReply] = useState('');
   const [busy, setBusy] = useState(false);
+  const [all, setAll] = useState(false);
   const [kind, icon, label] = STATUS[k.status] || STATUS.open;
+  const hidden = all ? 0 : Math.max(0, k.messages.length - SHOW_LAST);
 
   const run = async (fn, done) => {
     setBusy(true);
@@ -78,19 +92,21 @@ function Ticket({ k, onChanged, onPhoto }) {
       await fn();
       notify(done);
       onChanged();
+      return true;
     } catch (err) {
       notify(errorText(err), true);
+      return false;
     } finally {
       setBusy(false);
     }
   };
-  const sendReply = (e) => {
+  const sendReply = async (e) => {
     e.preventDefault();
-    run(() => api(`/support/${k.id}/reply`, { method: 'POST', body: { reply } }), 'Reply sent').then(() => setReply(''));
+    if (await run(() => api(`/support/${k.id}/reply`, { method: 'POST', body: { reply } }), 'Reply sent')) setReply('');
   };
   const setStatus = (status) => run(() => api(`/support/${k.id}/status`, { method: 'POST', body: { status } }), status === 'closed' ? 'Closed' : 'Reopened');
   const remove = async () => {
-    if (await confirm({ title: 'Delete this message?', text: 'The message, photo and voice note are deleted for good.', ok: 'Delete', danger: true })) {
+    if (await confirm({ title: 'Delete this conversation?', text: 'All its messages, photos and voice notes are deleted for good.', ok: 'Delete', danger: true })) {
       run(() => api(`/support/${k.id}`, { method: 'DELETE' }), 'Deleted');
     }
   };
@@ -100,39 +116,42 @@ function Ticket({ k, onChanged, onPhoto }) {
       <div className="panel-head">
         <div>
           <h3><a href={`#/users/${k.user.id}`}>{k.user.name}</a> <span className="muted">· {k.user.phone}</span></h3>
-          <p className="muted">{ago(k.createdAt)}{k.appVersion && ` · app v${k.appVersion}`}</p>
+          <p className="muted">Started {ago(k.createdAt)} · last message {ago(k.updatedAt)}{k.appVersion && ` · app v${k.appVersion}`}</p>
         </div>
         <Badge kind={kind} icon={icon}>{label}</Badge>
       </div>
-      {k.message && <p className="ticket-text" dir="auto">{k.message}</p>}
-      {(k.image || k.voice) && (
-        <div className="ticket-files">
-          {k.image && (
-            <button className="ticket-thumb" onClick={() => onPhoto(k.image)} aria-label="View photo">
-              <img src={fileUrl(k.image)} alt="" loading="lazy" />
-            </button>
-          )}
-          {k.voice && (
-            <div className="ticket-voice">
-              <i className="fa-solid fa-microphone" /> {k.voiceSeconds ? clock(k.voiceSeconds) : 'Voice note'}
-              <audio src={fileUrl(k.voice)} controls preload="none" />
-            </div>
-          )}
-        </div>
-      )}
-      {k.reply && (
-        <div className="ticket-reply">
-          <small className="muted">Reply by @{k.repliedBy} · {ago(k.repliedAt)}</small>
-          <p dir="auto">{k.reply}</p>
-        </div>
-      )}
-      {k.status !== 'closed' && (
-        <form onSubmit={sendReply} className="ticket-form">
-          <textarea rows={2} maxLength={4000} value={reply} onChange={(e) => setReply(e.target.value)} disabled={busy}
-            placeholder={k.reply ? 'Send another reply (replaces the one above)' : 'Write a reply. The user sees it in the app.'} />
-          <button className="btn solid" disabled={busy || !reply.trim()}><i className="fa-solid fa-paper-plane" /> Reply</button>
-        </form>
-      )}
+
+      <div className="chat">
+        {hidden > 0 && (
+          <button className="linkbtn chat-more" onClick={() => setAll(true)}>
+            <i className="fa-solid fa-chevron-up" /> Show {hidden} earlier message{hidden === 1 ? '' : 's'}
+          </button>
+        )}
+        {k.messages.slice(hidden).map((m) => (
+          <div key={m.id} className={`bubble ${m.from === 'admin' ? 'me' : 'them'}`}>
+            {m.image && (
+              <button className="ticket-thumb" onClick={() => onPhoto(m.image)} aria-label="View photo">
+                <img src={fileUrl(m.image)} alt="" loading="lazy" />
+              </button>
+            )}
+            {m.voice && (
+              <div className="ticket-voice">
+                <i className="fa-solid fa-microphone" /> {m.voiceSeconds ? clock(m.voiceSeconds) : 'Voice note'}
+                <audio src={fileUrl(m.voice)} controls preload="none" />
+              </div>
+            )}
+            {m.message && <p dir="auto">{m.message}</p>}
+            <small>{m.from === 'admin' ? `@${m.admin}` : k.user.name} · {ago(m.createdAt)}</small>
+          </div>
+        ))}
+      </div>
+
+      <form onSubmit={sendReply} className="ticket-form">
+        <textarea rows={2} maxLength={4000} value={reply} onChange={(e) => setReply(e.target.value)} disabled={busy}
+          placeholder={k.status === 'closed' ? 'Reply (this reopens the conversation for the user)' : 'Write a reply. The user sees it in the app.'}
+          onKeyDown={(e) => e.key === 'Enter' && (e.ctrlKey || e.metaKey) && reply.trim() && sendReply(e)} />
+        <button className="btn solid" disabled={busy || !reply.trim()}><i className="fa-solid fa-paper-plane" /> Reply</button>
+      </form>
       <div className="row-btns tight-end">
         {k.user.phone && <a className="btn" href={`tel:${k.user.phone}`}><i className="fa-solid fa-phone" /> Call</a>}
         {k.status === 'closed'

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../api';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import Icon from '../Icon';
@@ -14,12 +15,18 @@ export default function More() {
   const { main, extras } = useProducts();
   const [productsOpen, setProductsOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [supportUnread, setSupportUnread] = useState(0); // conversations with a reply not seen yet
   const t = useT();
   const pending = data.queue.length;
   const [note, setNote] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [pin, setPin] = useState('');
   useBackClose(() => { setDeleting(false); setPin(''); }, deleting);
+
+  useEffect(() => {
+    if (supportOpen) return;
+    api('/support/mine', {}, data.auth?.token).then((r) => setSupportUnread(r.tickets.filter((k) => k.unread).length), () => {});
+  }, [supportOpen]);
 
   const doLogout = () => {
     if (confirm(pending ? t.logoutUnsynced : t.logoutConfirm)) logout();
@@ -60,6 +67,7 @@ export default function More() {
       <h1><Icon name="gear" /> {t.settings}</h1>
       <button className="btn primary wide helpbtn" onClick={() => setSupportOpen(true)}>
         <Icon name="headset" /> {t.support}
+        {supportUnread > 0 && <span className="dotcount">{supportUnread}</span>}
       </button>
       <div className="card form">
         <div className="name"><Icon name="briefcase" /> {t.business}</div>

@@ -149,25 +149,62 @@ export async function migrate() {
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 )`);
 
-  // Help & Support: messages from users (text, photo, voice note) and the admin's reply.
-  // Attachments are files in server/uploads/support; the row keeps only their names.
+  // Help & Support: a conversation (ticket) per problem, with messages from the user and from
+  // support. User messages can carry a photo and a voice note; the files are in
+  // server/uploads/support and the rows keep only their names.
+  // status: open = waiting for support, replied = support answered last, closed.
   await db.query(`CREATE TABLE IF NOT EXISTS support_tickets (
   id INT AUTO_INCREMENT PRIMARY KEY,
   distributor_id INT NOT NULL,
+  status VARCHAR(10) NOT NULL DEFAULT 'open',
+  app_version VARCHAR(20) NOT NULL DEFAULT '',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  user_seen_id INT NOT NULL DEFAULT 0, -- last message the user has seen (for "new reply")
+  KEY idx_support_user (distributor_id, updated_at),
+  KEY idx_support_status (status, updated_at),
+  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+)`);
+  await db.query(`CREATE TABLE IF NOT EXISTS support_messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  ticket_id INT NOT NULL,
+  sender VARCHAR(10) NOT NULL,
+  admin_username VARCHAR(60) NULL,
   message TEXT NOT NULL,
   image VARCHAR(40) NULL,
   voice VARCHAR(40) NULL,
   voice_seconds SMALLINT NULL,
-  app_version VARCHAR(20) NOT NULL DEFAULT '',
-  status VARCHAR(10) NOT NULL DEFAULT 'open',
-  reply TEXT NULL,
-  replied_at DATETIME NULL,
-  replied_by VARCHAR(60) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  KEY idx_support_user (distributor_id, created_at),
-  KEY idx_support_status (status, created_at),
-  FOREIGN KEY (distributor_id) REFERENCES distributors(id) ON DELETE CASCADE
+  KEY idx_support_msg (ticket_id, id),
+  FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE
 )`);
+  // First version kept one message and one reply on the ticket row: move them into messages.
+  if (await hasColumn("support_tickets", "reply")) {
+    await db.query(
+      `INSERT INTO support_messages (ticket_id, sender, message, image, voice, voice_seconds, created_at)
+       SELECT id, 'user', message, image, voice, voice_seconds, created_at FROM support_tickets`,
+    );
+    await db.query(
+      `INSERT INTO support_messages (ticket_id, sender, admin_username, message, created_at)
+       SELECT id, 'admin', replied_by, reply, replied_at FROM support_tickets WHERE reply IS NOT NULL`,
+    );
+    if (!(await hasColumn("support_tickets", "updated_at"))) {
+      await db.query(`ALTER TABLE support_tickets ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`);
+    }
+    await db.query(`UPDATE support_tickets SET updated_at = COALESCE(replied_at, created_at)`);
+    await db.query(`ALTER TABLE support_tickets DROP COLUMN message, DROP COLUMN image, DROP COLUMN voice,
+      DROP COLUMN voice_seconds, DROP COLUMN reply, DROP COLUMN replied_at, DROP COLUMN replied_by`);
+    console.log("migrate: support tickets -> conversations");
+  }
+  if (!(await hasColumn("support_tickets", "user_seen_id"))) {
+    await db.query(`ALTER TABLE support_tickets ADD COLUMN user_seen_id INT NOT NULL DEFAULT 0`);
+    // Replies from before conversations were already shown to the user: don't flag them as new.
+    await db.query(`UPDATE support_tickets t SET user_seen_id = (SELECT COALESCE(MAX(m.id), 0) FROM support_messages m WHERE m.ticket_id = t.id)`);
+  }
+  if (await hasColumn("support_tickets", "user_seen_at")) {
+    await db.query(`ALTER TABLE support_tickets DROP COLUMN user_seen_at`);
+  }
+
   // Small key/value settings edited in the dashboard (support phone, email, WhatsApp).
   await db.query(`CREATE TABLE IF NOT EXISTS app_settings (
   k VARCHAR(40) PRIMARY KEY,
