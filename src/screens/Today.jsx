@@ -13,7 +13,7 @@ import { filterCustomers } from "../search";
 const STEP = 0.5;
 
 export default function Today() {
-  const { data, setDelivery, setExtra, giveUsual, markAll, balance } = useStore();
+  const { data, setDelivery, setExtra, giveUsual, markAll, balance, addPayment } = useStore();
   const { main, byId } = useProducts();
   const t = useT();
   const [date, setDate] = useState(today());
@@ -156,6 +156,11 @@ export default function Today() {
                 <Icon name="money-bill-wave" />
                 {due > 0 && <span>{money(due)}</span>}
               </button>
+              {due > 0 && (
+                <button className="paypill" aria-label={t.payNow} onClick={() => addPayment(c.id, due)}>
+                  <Icon name="money-bill" /> {t.payNow}
+                </button>
+              )}
               <button
                 className={`mark skip push ${state === "skipped" ? "on" : ""}`}
                 aria-label={t.skip}

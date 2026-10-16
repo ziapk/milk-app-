@@ -111,7 +111,26 @@ Hashtags for every post:
 
 ---
 
-## 5. Ongoing content ideas (2–3 posts per week)
+## 5. Stories (1080×1920, post all 6 in order on launch day)
+
+Each frame shows for about 5 seconds; together they tell one short story. The top and bottom of every
+frame are left empty because Facebook puts its own buttons there. Stickers go in that space.
+
+| # | Image | Add in the Stories editor |
+|---|---|---|
+| 1 | `story-1-hook.png`: "ابھی بھی کاپی میں حساب؟" | **Poll sticker:** 📒 کاپی / 📱 ایپ |
+| 2 | `story-2-meet.png`: mascot, "ملیے مو پارٹنر سے" | Music (optional), no text needed |
+| 3 | `story-3-delivery.png`: one-tap delivery | none |
+| 4 | `story-4-bill.png`: WhatsApp bill | none |
+| 5 | `story-5-features.png`: offline, voice, expenses, suppliers | none |
+| 6 | `story-6-download.png`: "آج ہی ڈاؤن لوڈ کریں" | **Link sticker** → [PLAY STORE / DOWNLOAD LINK], placed under the white "Tap the link below 👇" button |
+
+Tips
+- After posting, **save them as a Highlight** (if your page has highlights) or re-share frames 3–6 weekly.
+- Re-share Story 6 on its own every few days with a different first line, e.g. "مہینے کا آخر، بل بھیجنے کا وقت!"
+- Customer screenshots or short phone videos of the app make good extra stories; record with the phone held upright.
+
+## 6. Ongoing content ideas (2–3 posts per week)
 - **Tip Tuesday:** one feature per week (supplier ledger, shop credit sales, monthly report, Urdu font choice, account security).
 - **Customer stories:** a short video or photo of a real doodh wala using the app (ask permission first).
 - **Short videos/Reels (15–30 s):** screen recordings of marking a day's delivery and sending a WhatsApp bill.
@@ -119,7 +138,7 @@ Hashtags for every post:
 - **Ramadan / Eid greetings** with the mascot.
 - **Polls:** "آپ دودھ کا حساب کیسے رکھتے ہیں؟ 📒 کاپی / 📱 ایپ"
 
-## 6. Ads (optional, once the page has 5–6 posts)
+## 7. Ads (optional, once the page has 5–6 posts)
 - Objective: **App promotion** (Play Store) or **Messages** (WhatsApp).
 - Audience: Pakistan, 20–55, interests: dairy farming, livestock, small business, grocery shop. Language: Urdu.
 - Creatives: Post 2 and Post 3 images work best (they show the app in use). Start at Rs 500–1,000/day for 5–7 days, then keep the better performer.

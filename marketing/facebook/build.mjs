@@ -59,6 +59,43 @@ const feature = (icon, ur, en) => `
     <div style="font-size:21px;font-weight:600;color:#6b7a8a">${en}</div>
   </div>`;
 
+const deliveryCard = `
+    <div class="card" style="width:720px;overflow:hidden">
+      <div style="background:${GREEN};color:#fff;padding:18px 28px;font-size:28px;font-weight:700;display:flex;justify-content:space-between">
+        <span>Today</span><span>3 of 4 delivered</span></div>
+      ${row('Ahmed Ali', '2 L · Rs 220/L', 'done')}
+      ${row('Bilal Khan', '1.5 L · Rs 220/L', 'done')}
+      ${row('Fatima Bibi', '1 L · Rs 220/L', 'done')}
+      ${row('Usman Shah', '3 L · Rs 210/L', 'todo')}
+    </div>`;
+
+const billChat = `
+    <div style="background:#e7ddd3;border-radius:28px;padding:40px;width:720px;box-shadow:0 18px 50px rgba(7,24,40,.16)">
+      <div style="background:#d9fdd3;border-radius:22px 22px 6px 22px;padding:28px 34px;margin-left:80px;font-size:28px;line-height:1.55">
+        <b>Moo Partner – Bill</b><br>
+        Ahmed Ali · September<br>
+        Milk: 60 L × Rs 220 = <b>Rs 13,200</b><br>
+        Paid: Rs 10,000<br>
+        <b class="green">Due: Rs 3,200</b><br>
+        <span style="color:#6b7a8a">Thank you 🙏</span>
+        <div style="text-align:right;font-size:20px;color:#6b7a8a">9:41 ✓✓</div>
+      </div>
+    </div>`;
+
+// Story frame, 1080×1920. Facebook covers the top ~250px (name, progress bar) and the
+// bottom ~340px (reply box), so everything important sits between them.
+const story = (ur, en, visual, { dark = false, step = '' } = {}) => page(1080, 1920, `
+  <div class="${dark ? '' : 'bg-dots'}" style="position:absolute;inset:0;${dark ? `background:linear-gradient(170deg,${GREEN},#025a21)` : ''}"></div>
+  <div style="position:absolute;top:270px;left:70px;right:70px;text-align:center;color:${dark ? '#fff' : DARK}">
+    ${step ? `<div style="display:inline-block;font-size:28px;font-weight:700;padding:8px 26px;border-radius:40px;
+      background:${dark ? 'rgba(255,255,255,.18)' : '#dff1e5'};color:${dark ? '#fff' : GREEN}">${step}</div>` : ''}
+    <div class="ur" style="font-size:84px;font-weight:700;margin-top:10px">${ur}</div>
+    <div style="font-size:40px;font-weight:600;margin-top:6px;opacity:.85">${en}</div>
+  </div>
+  <div style="position:absolute;top:760px;left:0;right:0;bottom:360px;display:flex;align-items:center;justify-content:center">${visual}</div>
+  <img src="moopartner-wordmark.png" style="position:absolute;bottom:250px;left:50%;transform:translateX(-50%);height:70px;
+    ${dark ? 'filter:brightness(0) invert(1)' : ''}">`);
+
 const images = {
   // 720×720, shown as a circle: keep the mascot inside the middle.
   'profile-picture': page(720, 720, `
@@ -78,28 +115,9 @@ const images = {
   'post-1-launch': post('دودھ والوں کی اپنی ایپ', 'The app made for milk sellers',
     `<img src="moopartner-bike.png" style="height:560px">`),
 
-  'post-2-daily-delivery': post('روز کا دودھ، ایک ٹچ میں', 'Mark today\'s delivery in one tap', `
-    <div class="card" style="width:720px;overflow:hidden">
-      <div style="background:${GREEN};color:#fff;padding:18px 28px;font-size:28px;font-weight:700;display:flex;justify-content:space-between">
-        <span>Today</span><span>3 of 4 delivered</span></div>
-      ${row('Ahmed Ali', '2 L · Rs 220/L', 'done')}
-      ${row('Bilal Khan', '1.5 L · Rs 220/L', 'done')}
-      ${row('Fatima Bibi', '1 L · Rs 220/L', 'done')}
-      ${row('Usman Shah', '3 L · Rs 210/L', 'todo')}
-    </div>`),
+  'post-2-daily-delivery': post('روز کا دودھ، ایک ٹچ میں', 'Mark today\'s delivery in one tap', deliveryCard),
 
-  'post-3-whatsapp-bill': post('مہینے کا بل، سیدھا واٹس ایپ پر', 'Send monthly bills on WhatsApp', `
-    <div style="background:#e7ddd3;border-radius:28px;padding:40px;width:720px;box-shadow:0 18px 50px rgba(7,24,40,.16)">
-      <div style="background:#d9fdd3;border-radius:22px 22px 6px 22px;padding:28px 34px;margin-left:80px;font-size:28px;line-height:1.55">
-        <b>Moo Partner – Bill</b><br>
-        Ahmed Ali · September<br>
-        Milk: 60 L × Rs 220 = <b>Rs 13,200</b><br>
-        Paid: Rs 10,000<br>
-        <b class="green">Due: Rs 3,200</b><br>
-        <span style="color:#6b7a8a">Thank you 🙏</span>
-        <div style="text-align:right;font-size:20px;color:#6b7a8a">9:41 ✓✓</div>
-      </div>
-    </div>`),
+  'post-3-whatsapp-bill': post('مہینے کا بل، سیدھا واٹس ایپ پر', 'Send monthly bills on WhatsApp', billChat),
 
   'post-4-offline': post('انٹرنیٹ نہیں؟ کوئی مسئلہ نہیں', 'Works without internet, syncs when you are back online', `
     <div style="display:flex;align-items:center;gap:50px">
@@ -126,6 +144,33 @@ const images = {
       ${feature('🚚', 'سپلائر', 'Suppliers')}
       ${feature('🏪', 'دکان', 'Shop sales')}
     </div>`),
+  // Stories: post 1–6 in order as one sequence.
+  'story-1-hook': story('ابھی بھی کاپی میں حساب؟', 'Still writing milk accounts in a notebook?',
+    `<div style="font-size:340px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.3))">📒</div>`, { dark: true }),
+
+  'story-2-meet': story('ملیے مو پارٹنر سے', 'Meet Moo Partner, the app for milk sellers',
+    `<img src="moopartner-bike.png" style="width:900px">`),
+
+  'story-3-delivery': story('روز کا دودھ، ایک ٹچ میں', 'Mark today\'s delivery in one tap',
+    `<div style="transform:scale(1.25)">${deliveryCard}</div>`, { step: '1 · Deliver' }),
+
+  'story-4-bill': story('بل سیدھا واٹس ایپ پر', 'Monthly bill made for you, sent on WhatsApp',
+    `<div style="transform:scale(1.25)">${billChat}</div>`, { step: '2 · Bill' }),
+
+  'story-5-features': story('اور بھی بہت کچھ', 'And a lot more', `
+    <div style="display:grid;grid-template-columns:repeat(2,300px);gap:24px;zoom:1.55">
+      ${feature('📶', 'بغیر انٹرنیٹ', 'Works offline')}
+      ${feature('🎙️', 'بول کر تلاش', 'Voice search')}
+      ${feature('🧾', 'خرچے اور بچت', 'Expenses & savings')}
+      ${feature('🚚', 'سپلائر کھاتہ', 'Supplier accounts')}
+    </div>`, { step: '3 · Grow' }),
+
+  'story-6-download': story('آج ہی ڈاؤن لوڈ کریں', 'Download Moo Partner today', `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:40px;color:#fff;text-align:center">
+      <img src="moopartner-bike.png" style="width:640px">
+      <div style="font-size:44px;font-weight:700;background:#fff;color:${GREEN};padding:22px 50px;border-radius:70px">
+        Tap the link below 👇</div>
+    </div>`, { dark: true }),
 };
 
 for (const [name, html] of Object.entries(images)) {
